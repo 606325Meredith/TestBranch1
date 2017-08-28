@@ -1,0 +1,7 @@
+<apex:page standardStylesheets="true" sidebar="false" showHeader="false" controller="LocalErrorController" action="{!Checkpermissions}">
+<apex:form >
+<apex:outputLabel value="{!ErrorText}" for="errorLabel"/>
+
+</apex:form>
+ 
+</apex:page>

@@ -1,0 +1,1039 @@
+<apex:page standardStylesheets="true"  showHeader="true" controller="ProductSelectorController1" sidebar="true">
+   <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <title>National Strategy Alocation</title>
+            <link rel="stylesheet" href="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/css/bootstrap.min.css')}" />
+            <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+            <script src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/jquery.min.js')}"></script>
+            <script src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/bootstrap.min.js')}"></script>
+            <script type="text/javascript">
+            $(document).ready(function() {
+                initPage();
+
+                // Add spacing between the checkboxes for each Banner Allocation CCT checkboxes
+                $("[id$=NBA-CCT] td").each(function(i, el) {
+                    $(this).css('width', '75px');
+                });
+                // Add spacing between the checkboxes for each Sub-Banner Allocation CCT checkboxes
+                $("[id$=SBA-CCT] td").each(function(i, el) {
+                    $(this).css('width', '75px');
+                });
+
+                $('.collapse').on('shown.bs.collapse', function(){
+                    $(this).parent().find(".glyphicon-chevron-down").removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+                }).on('hidden.bs.collapse', function(){
+                    $(this).parent().find(".glyphicon-chevron-up").removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
+                });
+                $('#applyAllocationsBtn').on('click',function(){
+                    let allocateAllNumber = $('#allocateAllNumber').val();
+                    let checkedCount = $('input[class="check_individual_all"]:checked').length;
+                    if(checkedCount < 2)
+                    {
+                        $('#selectItemsErrorMessage').show();
+                    }else
+                    {
+                        $('#selectItemsErrorMessage').hide();
+                        applyTargetToSelectedJS(allocateAllNumber);
+                    }
+                    /*$('input[class="check_individual_all"]:checked').each(function(index){
+                        $(this ).parent().parent().find("input[type='text']").val(allocateAllNumber);
+                    });
+                    $('input[class="check_main"]:checked').each(function(index){
+                        $(this ).parent().parent().find("input[type='text']").val(allocateAllNumber);
+                    });*/
+                });
+
+                $('#selectAllBtn').on('click',function(){
+                    let totalBannerRecordsCount = $('[id$="totalRecs"]').val();
+                    let totalSubBannerRecordsCount = $('[id$="totalSubBannerRecs"]').val();
+                    //console.log('totalSubBannerRecordsCount---'+totalSubBannerRecordsCount);
+                    let totalRecordsCount = (isNaN(totalBannerRecordsCount)?0:Number(totalBannerRecordsCount)) + (isNaN(totalSubBannerRecordsCount)?0:Number(totalSubBannerRecordsCount));
+                    let allSelectedCount = getSelectedBannerCount() + getSelectedSubBannerCount();
+                    if(allSelectedCount>0)
+                    {
+                        if(confirm('You have selected '+allSelectedCount + ' accounts in the results, are you sure you would like to void these selections by selecting a total of '+totalRecordsCount+' accounts currently existing on all pages?'))
+                        {
+                            selectAllBannersAndSubBannersJS();
+                        }
+                    }else
+                    {
+                        selectAllBannersAndSubBannersJS();
+                    }
+
+                    return false;
+                });
+
+                $('#selectAllBannersBtn').on('click',function(){
+                    let totalBannerRecordsCount = $('[id$="totalRecs"]').val();
+                    let selectedBannerCount = getSelectedBannerCount();
+                    if(selectedBannerCount>0)
+                    {
+                        if(confirm('You have selected '+selectedBannerCount + ' accounts in the results, are you sure you would like to void these selections by selecting a total of '+totalBannerRecordsCount+' accounts currently existing on all pages?'))
+                        {
+                            selectAllBannersJS();
+                        }
+                    }else
+                    {
+                        selectAllBannersJS();
+                    }
+
+                    return false;
+                });
+
+                $('#clearAllBtn').on('click', function(){
+                    let allSelectedCount = getSelectedBannerCount() + getSelectedSubBannerCount();
+                    if(allSelectedCount >0)
+                    {
+                        if(confirm('You have selected '+allSelectedCount+' accounts in the results, are you sure you would like to clear all of these selections?'))
+                        {
+                            clearAllSelectedJS();
+                        }
+                    }else
+                    {
+                        clearAllSelectedJS();
+                    }
+
+                    return false;
+                });
+
+                $('#clearFiltersBtn').on('click',function(){
+                    if(confirm('You are about to start the filtering process over from the beginning.  You will lose any banner / sub-banner selections you have made.  Are you sure you want to proceed?'))
+                    {
+                        $('[id$=":selectedBannerIds"]').val('');
+                        $('[id$=":selectedSubBannerIds"]').val('');
+                        clearFiltersJS();
+                    }
+                    return false;
+                });
+
+            });//end document ready
+
+            let allBannerResultsArray = [];
+            let selectedBannerResultsArray =[];
+            $(document).on('click','#allocateAndExitBtn, #allocateAndNewInitiativeBtn', function(){
+                //Initialize to empty arrays each time the buttons are clicked.
+                allBannerResultsArray = [];
+                selectedBannerResultsArray =[];
+                let btnClicked = $(this).attr('id');
+                let allSelectedSubBannersString = $('[id$=":selectedSubBannerIds"]').val();
+                let allSelectedBannersString = $('[id$=":selectedBannerIds"]').val();
+
+                let selectedBannersArray =[];
+                let selectedSubBannersArray =[];
+                if(allSelectedBannersString)
+                {
+                    selectedBannersArray = allSelectedBannersString.split(';');
+                }
+                if(allSelectedSubBannersString)
+                {
+                    selectedSubBannersArray = allSelectedSubBannersString.split(';');
+                }
+                let allBannerResults = $('[id$=":allBannerResults"]').val();
+                let allSelectedCount = selectedBannersArray.length + selectedSubBannersArray.length;
+                //console.log('allselectedCount----'+allSelectedCount);
+                allBannerResultsArray = JSON.parse(allBannerResults);
+                allBannerResultsArray.forEach(function(item){
+                    //console.log('includes?====='+selectedBannersArray.includes(item.ids)); // includes() is not a supported method call in IE or Opera
+                    //console.log(item.wam + ' - ' + item.target+'--ids--'+item.ids);
+                    //if(selectedBannersArray.includes(item.ids)) // includes() is not a supported method call in IE or Opera
+                    if(selectedBannersArray.indexOf(item.ids) >= 0)
+                    {
+                        item.checked = true;
+                        let newVal = $('span[data-id="'+item.ids+'"]').parent().parent().find('.bannerProposed').val();
+                        //console.log('newVal in banner---'+newVal);
+                        if(newVal)
+                        {
+                            item.proposed = newVal;
+                        }
+
+                        selectedBannerResultsArray.push(item);
+                    }
+
+                    //console.log('sub-banners---'+item.nbaWrap);
+                    if(item.nbaWrap)
+                    {
+                        item.nbaWrap.forEach(function(item){
+                            //if(selectedSubBannersArray.includes(item.acId)) // includes() is not a supported method call in IE or Opera
+                            if(selectedSubBannersArray.indexOf(item.acId) >= 0)
+                            {
+                                item.isChecked = true;
+                                let newVal = $('td[data-id="'+item.acId+'"').parent().find('.subBannerProposed').val();
+                                //console.log('new sub banner val---'+newVal);
+                                if(newVal)
+                                {
+                                    item.proposedTarget = newVal;
+                                }
+
+                                //selectedBannerResultsArray.push(item);
+                            }
+                        });
+                    }
+                });
+                //console.log('items selected---'+JSON.stringify(selectedBannerResultsArray));
+                //console.log('selected items length---'+selectedBannerResultsArray.length);
+                if(allSelectedCount>=9000)
+                {
+                    if(confirm('The number of customer accounts you are trying to allocate exceeds the Salesforce query limit. Are you sure you would like to allocate the full set of accounts that you have selected?'))
+                    {
+                        ProductSelectorController1.updateAllocated('{!nationalInitiative.Id}', selectedBannerResultsArray.splice(0,2),function(result, event) {
+                            processResults(result,event,btnClicked);
+                        });
+                    }
+                }else
+                {
+                    ProductSelectorController1.updateAllocated('{!nationalInitiative.Id}', selectedBannerResultsArray,function(result, event) {
+                            processResults(result,event,btnClicked);
+                        });
+                }//end check on allSelectedCount
+                //console.log('nationalInitiative Id----'+'{!nationalInitiative.Id}');
+                return false;
+            });//end allocateAndExitBtn, allocateAndNewInitiativeBtn buttonHandlers
+
+            function processResults(result,event,btnClicked)
+            {
+                //console.log('result----'+JSON.stringify(result));
+                //console.log('event---'+event.status);
+                //console.log('btnClicked---'+btnClicked);
+
+                if(event.status)
+                {
+                    if(!result.errorMessage || result.returnCode !== 0)
+                    {
+                        if(btnClicked === 'allocateAndExitBtn')
+                        {
+                            allocateAndExitJS(result.returnCode,result.errorMessage);
+                        }else if(btnClicked === 'allocateAndNewInitiativeBtn')
+                        {
+                            allocateAndNewInitiativeJS(result.returnCode,result.errorMessage);
+                        }
+
+                    }else
+                    {
+                        //console.log('selectedBannerResultsArray--next times---length===='+ selectedBannerResultsArray.length);
+                        if(selectedBannerResultsArray.length > 0)
+                        {
+                            let arrayToUse = [];
+                            if(selectedBannerResultsArray.length>= 9000)
+                            {
+                                arrayToUse = selectedBannerResultsArray.splice(0,9000);
+                            }else
+                            {
+                                arrayToUse = selectedBannerResultsArray.splice(0,selectedBannerResultsArray.length);
+                            }
+                            //console.log('arrayToUse-----'+JSON.stringify(arrayToUse));
+                            ProductSelectorController1.updateAllocated('{!nationalInitiative.Id}', arrayToUse,function(result, event) {
+                                processResults(result,event,btnClicked);
+                            });
+                        }else
+                        {
+                            //All selections have been allocated
+                            if(btnClicked === 'allocateAndExitBtn')
+                            {
+                                allocateAndExitJS(result.returnCode,result.errorMessage);
+                            }else if(btnClicked === 'allocateAndNewInitiativeBtn')
+                            {
+                                allocateAndNewInitiativeJS(result.returnCode,result.errorMessage);
+                            }
+                        }
+
+                    }//end null check on errorMessage
+                }
+            }//end processResults
+
+            function getSelectedBannerCount()
+            {
+                let allSelectedBannersString = $('[id$=":selectedBannerIds"]').val();
+                let bannerCount = 0;
+                if(allSelectedBannersString)
+                {
+                    let selectedBannersArray = allSelectedBannersString.split(';');
+                    bannerCount = selectedBannersArray.length;
+                }else
+                {
+                    bannerCount = 0;
+                }
+                //console.log('allSelectedBannersString----'+allSelectedBannersString);
+                //console.log('bannerCount-----'+bannerCount);
+                return bannerCount;
+            }
+
+            function getSelectedSubBannerCount()
+            {
+                let allSelectedSubBannersString = $('[id$=":selectedSubBannerIds"]').val();
+
+                let subBannerCount = 0;
+                if(allSelectedSubBannersString)
+                {
+                    let selectedSubBannersArray = allSelectedSubBannersString.split(';');
+                    subBannerCount = selectedSubBannersArray.length;
+                }else
+                {
+                    subBannerCount = 0;
+                }
+                //console.log('allSelectedSubBannersString----'+allSelectedSubBannersString);
+                //console.log('subBannerCount-----'+subBannerCount);
+                return subBannerCount;
+            }
+
+            var initPage = function(){
+                //console.log('entered initPage');
+                $(".panel-heading input[type='text']").attr("disabled", "disabled");
+                $('.panel-body input[type="text"]').attr("disabled", "disabled");
+                checkboxListener();
+                checkHeaderIfOnlyOnePanelItem();
+                checkAllSelectedBanners();
+                checkAllSelectedSubBanners();
+            };
+
+            function checkAllSelectedBanners()
+            {
+                let allSelectedBannersString = $('[id$=":selectedBannerIds"]').val();
+                //console.log('allSelectedBannersString----'+allSelectedBannersString);
+                if(allSelectedBannersString)
+                {
+                    let selectedBannersArray = allSelectedBannersString.split(';');
+                    //console.log('selectedBannersArray---'+selectedBannersArray);
+                    for(let i=0;i<selectedBannersArray.length;i++)
+                    {
+                        //console.log('elem val----'+$('span[data-id='+selectedBannersArray[i]+']').prev().attr('id'));
+                        $('span[data-id='+selectedBannersArray[i]+']').prev().prop('checked',true);
+                    }
+                }
+            }
+
+            function checkAllSelectedSubBanners()
+            {
+                let allSelectedSubBannersString = $('[id$=":selectedSubBannerIds"]').val();
+                //console.log('allSelectedSubBannersString----'+allSelectedSubBannersString);
+                if(allSelectedSubBannersString)
+                {
+                    let selectedSubBannersArray = allSelectedSubBannersString.split(';');
+                    for(let i=0;i<selectedSubBannersArray.length;i++)
+                    {
+                        $('span[data-id='+selectedSubBannersArray[i]+']').prev().find('input[type="checkbox"]').prop('checked',true);
+                    }
+                }
+            }
+
+            $(document).on('change','.check_individual_all', function(){
+                if($(this).is(":checked")){
+                    let bannerId = $(this).next().attr('data-id');
+                    updateSelectedBannerIds(bannerId,'add');
+                    $(this).parents(".panel-heading").find("input[type='text']").removeAttr("disabled");
+                    updateBannerSubBannerResults(bannerId);//only update when checkbox selected -- if unselected, the record wouldn't be updated at all
+                }
+                else{
+                    let bannerId = $(this).next().attr('data-id');
+                    updateSelectedBannerIds(bannerId,'remove');
+                    $(this).parents(".panel-heading").find("input[type='text']").attr("disabled", "disabled");
+                }
+            });
+
+            function updateBannerSubBannerResults(bannerOrSubBannerId)
+            {
+
+                let allBannerResults = $('[id$=":allBannerResults"]').val();
+                allBannerResultsArray = JSON.parse(allBannerResults);
+                allBannerResultsArray.forEach(function(item){
+                    if(item.ids=== bannerOrSubBannerId)
+                    {
+                        item.checked = true;
+                        let newVal = $('span[data-id="'+item.ids+'"]').parent().parent().find('.bannerProposed').val();
+                        //console.log('newVal in banner---'+newVal);
+                        if(newVal)
+                        {
+                            item.proposed = newVal;
+                        }
+
+                    }
+
+                    //console.log('sub-banners---'+item.nbaWrap);
+                    if(item.nbaWrap)
+                    {
+                        item.nbaWrap.forEach(function(item){
+                            if(item.acId ==bannerOrSubBannerId)
+                            {
+                                item.isChecked = true;
+                                let newVal = $('td[data-id="'+item.acId+'"').parent().find('.subBannerProposed').val();
+                                //console.log('in updateBannerSubBannerResults...new sub banner val---'+newVal);
+                                if(newVal)
+                                {
+                                    item.proposedTarget = newVal;
+                                }
+                            }
+                        });
+                    }
+                });
+            }//end updateBannerSubBannerResults()
+
+            $(document).on('change','.check_main', function(){
+                var currPanelInput = $(this).parent().parent().find("td input[type='text']");
+
+                if(currPanelInput.is(":disabled")){
+                    currPanelInput.removeAttr("disabled");
+                }
+                else{
+                    currPanelInput.attr("disabled", "disabled");
+                }
+
+                if($(this).parent().parent().find(".check_main:checked").length == 0){
+                    //$(this).parents(".panel").find(".panel-heading input[type='checkbox']").removeProp("checked");
+                    //$(this).parents(".panel").find(".panel-heading input[type='text']").attr("disabled", "disabled");
+                }
+                else{
+                   $(this).parent().parent().find(".panel-heading input[type='checkbox']").prop("checked", "checked");
+                   $(this).parent().parent().find(".panel-heading input[type='text']").removeAttr("disabled");
+                }
+                //Update checked sub banner ids
+                if($(this).is(":checked")){
+                    //Check the related banner also
+                    let bannerId = $(this).parent().next().attr('data-bannerId');
+                    //console.log('bannerId=------'+bannerId);
+                    $('#'+bannerId).prev().prop('checked',true);
+                    updateSelectedBannerIds(bannerId,'add');
+                    checkboxListener();
+
+                    let subBannerId = $(this).parent().next().attr('data-id');
+                    updateSelectedSubBannerIds(subBannerId,'add');
+                    $(this).parents(".panel-heading").find("input[type='text']").removeAttr("disabled");
+                    updateBannerSubBannerResults(subBannerId);//only update when checkbox selected -- if unselected, the record wouldn't be updated at all
+                }
+                else{
+                    let subBannerId = $(this).parent().next().attr('data-id');
+                    updateSelectedSubBannerIds(subBannerId,'remove');
+                    $(this).parents(".panel-heading").find("input[type='text']").attr("disabled", "disabled");
+                }
+            });
+
+            $(".check_all_banners").on("change", function(){
+                if($(this).is(":checked")){
+                    //checkAllMainCheckboxes(true);
+                    enableDisableHeadingCheck(true);
+                }
+                else{
+                    //checkAllMainCheckboxes(false);
+                    enableDisableHeadingCheck(false);
+                }
+            });
+
+            var checkboxListener = function(){
+                var allIndividuals = $(".check_individual_all");
+                for(var i=0, iLen = allIndividuals.length; i < iLen; i++){
+                    if( $(allIndividuals[i]).is(":checked") ){
+                        $( $(allIndividuals[i]) ).parent().parent().find("input[type='text']").removeAttr("disabled");
+                    }
+                }
+
+                var allMains = $(".check_main");
+                for(var i=0, iLen = allMains.length; i < iLen; i++){
+                    if( $(allMains[i]).is(":checked") ){
+                        $( $(allMains[i]) ).parent().parent().find("input[type='text']").removeAttr("disabled");
+                    }
+                }
+
+            };
+
+            var checkHeaderIfOnlyOnePanelItem = function(){
+                var allPanels = $(".panel-group");
+
+                    if(allPanels.length == 1){
+                        $(allPanels[0]).find(".panel-heading input[type='checkbox']").trigger("click");
+
+                        if($(allPanels[0]).find(".panel-body table > tbody > tr").length == 1){
+                            $(allPanels[0]).find(".panel-body table .check_main").trigger("click");
+                        }
+                    }
+
+            };
+
+            var enableDisableHeadingCheck = function(checkFlag){
+                if(checkFlag){
+                    $(".panel-heading input[type='checkbox']").prop("checked", "checked");
+                    $(".panel-heading input[type='text']").removeAttr("disabled");
+                }
+                else{
+                    $(".panel-heading input[type='checkbox']").removeProp("checked");
+                    $(".panel-heading input[type='text']").attr("disabled", "disabled");
+                }
+            };
+
+            var enableDisablePanelInputs = function(currCheckBox, checkFlag){
+                var currPanelInput = $(currCheckBox).parents("tr").find("td:last-child input[type='text']");
+
+                if(checkFlag){
+                    if(checkFlag == true){
+                        currPanelInput.attr("disabled", "disabled");
+                    }
+                    else if(checkFlag == false){
+                        currPanelInput.removeAttr("disabled");
+                    }
+                }
+                else{
+                    if(currPanelInput.is(":disabled")){
+                        currPanelInput.removeAttr("disabled");
+                    }
+                    else{
+                        currPanelInput.attr("disabled", "disabled");
+                    }
+                }
+            };
+
+            var checkAllMainCheckboxes = function(checkFlag, container){
+                var allMainChecks = container ? container.find(".check_main") : $(".check_main") ;
+                for(var i=0, iLen = allMainChecks.length; i < iLen; i++){
+                    if(checkFlag){
+                        $(allMainChecks[i]).prop("checked", "checked");
+                        enableDisablePanelInputs($(allMainChecks[i]), false);
+                    }
+                    else{
+                        $(allMainChecks[i]).removeProp("checked");
+                        enableDisablePanelInputs($(allMainChecks[i]), true);
+                    }
+                }
+            };
+
+            var handleEnterKey = function(e, elem){
+                if(e.keyCode == 13){
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    $(elem).next("span").trigger("click");
+
+                    return false;
+                }
+            };
+
+            function updateSearch() {
+                filtersearch();
+            }
+
+            function clearSearch() {
+                $('[id$=searchName]').val('');
+                filtersearch();
+            }
+
+            function goBack() {
+                window.history.back();
+            }
+
+            function updateSelectedBannerIds(newId, operation)
+            {
+                 $('[id$=":selectedBannerIds"]').val(function(index,value){
+                      if(operation==='add')
+                      {
+                         return (value + (value?';':'') + newId);
+                      }
+                      else if(operation === 'remove')
+                      {
+                         return value.replace(';'+newId,'').replace(newId+';','').replace(newId,'');
+                      }
+                 });
+                 //console.log('all selected---'+$('[id$=":selectedBannerIds"]').val());
+            }
+
+            function updateSelectedSubBannerIds(newId, operation)
+            {
+                 $('[id$=":selectedSubBannerIds"]').val(function(index,value){
+                      if(operation==='add')
+                      {
+                         return (value + (value?';':'') + newId);
+                      }
+                      else if(operation === 'remove')
+                      {
+                         return value.replace(';'+newId,'').replace(newId+';','').replace(newId,'');
+                      }
+                 });
+            }
+
+            function checkSelectedValues () {
+                var selectedBanners = $('[id$=":selectedBannerIds"]').val();
+                var selectedSubBanners = $('[id$=":selectedSubBannerIds"]').val();
+                if (selectedBanners.length > 0 || selectedSubBanners.length > 0) {
+                    if(confirm('You are about to start the filtering process over from the beginning.  You will lose any banner / sub-banner selections you have made.  Are you sure you want to proceed?'))
+                    {
+                        $('[id$=":selectedBannerIds"]').val('');
+                        $('[id$=":selectedSubBannerIds"]').val('');
+                        searchbannersApex();
+                    }
+                    return false;
+                }
+                searchbannersApex();
+            }
+            </script>
+
+            <style>
+            .glyphicon {
+                font-family: 'Glyphicons Halflings';
+                width: 40px;
+            }
+
+            .glyphicon-chevron-down::after {
+                content: "\e114";
+                font-size: 12px !important;
+                margin-left: 10px !important;
+                font-weight: bold;
+            }
+
+            .glyphicon-chevron-down::before {
+                content: "";
+            }
+
+            .glyphicon-chevron-up::after {
+                content: "\e113";
+                font-size: 12px !important;
+                margin-left: 10px !important;
+                font-weight: bold;
+            }
+
+            .glyphicon-chevron-up::before {
+                content: "";
+            }
+
+            .table > tbody > tr > td,
+            .table > tbody > tr > th,
+            .table > tfoot > tr > td,
+            .table > tfoot > tr > th,
+            .table > thead > tr > td,
+            .table > thead > tr > th {
+                border-top: 0px solid #fff;
+            }
+
+            .errspan {
+                float: right;
+                font-size: 16px !important;
+                margin-right: 6px;
+                margin-top: -26px;
+                position: relative;
+                z-index: 2;
+            }
+
+            .form-control {
+                font-weight: normal;
+            }
+
+            label {
+                display: inline-block;
+                max-width: 100%;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            .bg-block {
+                padding: 10px;
+                min-width:1280px;
+            }
+
+            .bg-block .bPageBlock {
+                background-color: #fff !important;
+                border: 0px !important;
+            }
+
+            h1 {
+                font-size: 24px;
+                color: #807f83;
+                margin: 0px 0px 15px 0px;
+                display: block;
+                font-family: Trebuchet MS;
+            }
+
+            .pbButton .btn {
+                margin: 0px 8px 0px 0px;
+            }
+
+            .dateOnlyInput input {
+                display: inline;
+                width: 7em;
+            }
+
+            /* clear search link */
+            a:link, a:visited, a:hover, a:active {
+                color: #2980B9;
+                text-decoration: none;
+            }
+
+            .form-group span select {
+                width: 100%;
+                height: 34px;
+                padding: 6px 12px;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+
+            input[type=radio] {
+                margin: 4px 4px 0px;
+            }
+
+            .dropdown a {
+                background-color: #fff;
+                text-decoration: none;
+                color: #000;
+                padding: 10px;
+                border: 1px solid #c9c9c9;
+                width: 100%;
+                display: block;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            .dropdown-menu label{
+                font-weight:normal;
+                margin-left:5px;
+            }
+            .pbButton .btn {
+                margin: 0px 8px 0px 0px;
+            }
+            .apexp .bPageBlock p{
+                font-size:14px;
+                line-height:20px;
+                margin:0px;
+            }
+            .btn-default {
+                color: #fff !important;
+                background-color: #16325c !important;
+                border-color: #ccc;
+            }
+            .btn {
+                display: inline-block;
+                padding: 5px 10px !important;
+                margin-bottom: 0;
+                font-size: 12px !important;
+                font-weight: 400;
+                line-height: 1.42857143;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: middle;
+
+                cursor: pointer;
+
+                background-image: none !important;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            </style>
+        </head>
+
+        <apex:form id="form">
+           <apex:outputPanel id="fullPanel">
+            <apex:actionFunction action="{!searchbanners}" name="filtersearch" reRender="bannerResultsPanel" oncomplete="initPage();"  />
+            <!-- <apex:actionFunction action="{!updateAllocated}" name="saveAllocate" oncomplete="initPage();" /> -->
+            <apex:actionFunction action="{!selectAllBannersAndSubBanners}" name="selectAllBannersAndSubBannersJS"  reRender="bannerResultsPanel" oncomplete="initPage();" />
+            <apex:actionFunction action="{!selectAllBanners}" name="selectAllBannersJS"  reRender="bannerResultsPanel" oncomplete="initPage();" />
+            <apex:actionFunction action="{!clearAllSelected}" name="clearAllSelectedJS"  reRender="bannerResultsPanel" oncomplete="initPage();" />
+
+            <apex:actionFunction action="{!clearFilters}" name="clearFiltersJS"  oncomplete="initPage();"/>
+
+            <apex:actionFunction action="{!allocateAndExit}" name="allocateAndExitJS"  reRender="fullPanel" oncomplete="initPage();">
+                <apex:param name="returnCode" value="" assignTo="{!returnCode}"/>
+                <apex:param name="errorMessage" value="" assignTo="{!errorMessage}"/>
+            </apex:actionFunction>
+            <apex:actionFunction action="{!allocateAndNewInitiative}" name="allocateAndNewInitiativeJS"  reRender="fullPanel" oncomplete="initPage();">
+                <apex:param name="returnCode" value="" assignTo="{!returnCode}"/>
+                <apex:param name="errorMessage" value="" assignTo="{!errorMessage}"/>
+            </apex:actionFunction>
+
+            <apex:actionFunction name="applyTargetToSelectedJS" action="{!applyTargetToSelected}" reRender="bannerResultsPanel" oncomplete="initPage();" >
+                <apex:param name="allocateAllValue" value="" assignTo="{!allocateAllValue}"/>
+            </apex:actionFunction>
+            <apex:pageMessages escape="false"/>
+            <body class="bootstrap-sf1">
+            <div class="bg-block">
+
+                <apex:pageblock >
+                    <!-- <div class="container header">-->
+                    <div>
+                        <div class="row">
+                            <!--<div class="col-md-12 head" style="padding: 0px;">-->
+                            <div>
+                                <h1>Strategy Item Creation</h1>
+                            </div>
+
+                            <!--  Nav ends here  -->
+                            <div>
+                            <div class="well well-sm col-xs-12">
+                            <div>
+                                <h4 style="color:#555;font-size:16px;display:block;margin-bottom:15px">Strategy Details</h4>
+                            </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                    <p>Initiative</p>
+                                    <p><strong>{!nationalInitiative.Initiatives__c}</strong></p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p>Objective</p>
+                                    <p><strong>{!nationalInitiative.Objectives__c}</strong></p>
+                                </div>
+                                <div class="col-md-3 ">
+                                    <p>Start Date</p>
+                                    <p><strong><apex:outputText value=" {!nationalInitiative.Initiative_Start_Date__c}"/></strong></p>
+                                </div>
+                                <div class="col-md-3 ">
+                                    <p>End Date</p>
+                                    <p><strong><apex:outputText value=" {!nationalInitiative.Initiative_End_Date__c}"/></strong></p>
+                                </div>
+                                <div class="clearfix"></div>
+                                <div style="height: 30px;"></div>
+                                <apex:outputpanel rendered="{!ProductSKUflag}">
+                                    <div class="col-md-3">
+                                        <p>Product</p>
+                                        <p><strong>{!nationalInitiative.Product_SKU__c}</strong></p>
+                                    </div>
+                                </apex:outputpanel>
+                                <apex:outputpanel rendered="{!ProductGroupflag}">
+                                    <div class="col-md-3">
+                                        <p>Product</p>
+                                        <p><strong>{!nationalInitiative.Product_Group__c}</strong></p>
+                                    </div>
+                                </apex:outputpanel>
+                                <apex:outputpanel rendered="{!Brandflag}">
+                                    <div class="col-md-3">
+                                        <p>Product</p>
+                                        <p><strong>{!nationalInitiative.Brand__c}</strong></p>
+                                    </div>
+                                </apex:outputpanel>
+                                <apex:outputpanel rendered="{!Noflag}">
+                                    <div class="col-md-3">
+                                        <p>Product</p>
+                                        <p><strong></strong></p>
+                                    </div>
+                                </apex:outputpanel>
+                                <div class="col-md-3 ">
+                                    <p>Target</p>
+                                    <p><strong>{!nationalInitiative.Target__c}</strong></p>
+                                </div>
+                                <div class="col-md-3 ">
+                                    <p>Unit of Measure</p>
+                                    <p><strong>{!nationalInitiative.Unit_of_Measure__c}</strong></p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p>Description</p>
+                                    <p><strong>{!nationalInitiative.Comments__c}</strong></p>
+                                </div>
+                                </div>
+                            </div>
+                            <div class="">
+
+                                <div class="well well-sm">
+                                    <h4 style="font-weight:bold;font-size:16px">Banner Allocation</h4>
+                                    <div class="row">
+                                        <div class="col-sm-4 col-md-4">
+                                            <div class="form-group">
+                                                <label style="font-size:14px">Customer Type</label>
+                                                <apex:inputField value="{!nba.System_Customer_Type_Multi__c}"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-1 col-md-1"/>
+                                        <div class="col-sm-4 col-md-4">
+                                            <div class="form-group">
+                                                <label style="font-size:14px">Customer Sub Type</label>
+                                                <apex:inputField value="{!nba.System_Customer_Sub_Type__c}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-4 col-md-4">
+                                            <div class="form-group">
+                                                <label for="Tier" style="font-size:14px">Client Customer Tier (CCT)</label>
+                                                <apex:selectCheckboxes value="{!cctBannerSelections}" style="font-size:15px;padding:1em;" layout="lineDirection" Id="NBA-CCT">
+                                                    <apex:selectOptions value="{!MyCCTCheckboxes}"></apex:selectOptions>
+                                                </apex:selectCheckboxes>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-1 col-md-1"/>
+                                        <div class="col-sm-3 col-md-3">
+                                            <div class="form-group">
+                                                <label style="font-size:14px">Purchasing Options</label>
+                                                <apex:inputField value="{!ccr.Purchasing_Options__c}"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4 col-md-4">
+                                            <div class="form-group">
+                                                <label style="font-size:14px">WAM</label><br/>
+                                                <apex:inputField value="{!client.WAM__c}" style="width:14px;height:14px"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h4 style="font-weight:bold;font-size:16px">Sub-Banner Allocation</h4>
+                                    <div class="row">
+                                        <div class="col-sm-6 col-md-6">
+                                            <div class="form-group">
+                                                <label for="Tier" style="font-size:14px">Client Customer Tier (CCT)</label>
+                                                <apex:selectCheckboxes value="{!cctSubBannerSelections}" style="font-size:15px;padding:1em;" layout="lineDirection" Id="SBA-CCT">
+                                                    <apex:selectOptions value="{!MyCCTCheckboxes}"></apex:selectOptions>
+                                                </apex:selectCheckboxes>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--
+                                    <div class="form-group">
+                                        <label for="Tier" style="font-size:14px;padding-right:15px">Client Customer Tier</label>
+                                        <apex:inputField value="{!nba.System_Client_Customer_Tier__c}" styleclass="form-control" style="width:200px"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="WAM" style="font-size:14px;padding-right:15px">WAM</label>
+                                         <apex:selectCheckboxes >
+                                            <apex:selectOptions value="{!WAMItems}"/><br/>
+                                         </apex:selectCheckboxes>
+                                    </div>
+                                    -->
+                                    <!--<apex:commandButton action="{!searchbanners}" value="Apply Filters" styleclass="btn btn-lg btn-default" status="status" rerender="bannerResultsPanel" oncomplete="initPage();"/>-->
+                                    <apex:commandButton onClick="if(!checkSelectedValues()) return false;" value="Apply Filters" styleclass="btn btn-lg btn-default" status="status" />
+                                    <apex:actionFunction name="searchbannersApex" action="{!searchbanners}" rerender="bannerResultsPanel" oncomplete="initPage();"/>
+                                    <button id="clearFiltersBtn" class="btn btn-lg btn-primary">Clear Filters</button>
+                                </div>
+
+                                <div class="clearfix"></div>
+
+                                <!--Filters row-->
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <!-- <div class="form-group" style="margin-left:32px;font-size:14px">
+                                            <input type="checkbox" name="check" id="check" class="check_all_banners" />&nbsp;&nbsp;&nbsp;<strong> All Banners</strong>
+                                        </div> -->
+
+                                        <!-- <apex:commandButton value="Select All Banners" action="{!selectAllBanners}" rerender="bannerResultsPanel" styleclass="btn btn-lg btn-default"/>
+                                        <apex:commandButton value="Select All Banners & Sub-banners" action="{!selectAll}" rerender="bannerResultsPanel" styleclass="btn btn-lg btn-default"/> -->
+                                        <button id="selectAllBannersBtn" class="btn btn-lg btn-default">Select All Banners</button>
+                                        <button id="selectAllBtn" class="btn btn-lg btn-default">Select All Banners &amp; Sub-banners</button>
+                                        <button id="clearAllBtn" class="btn btn-lg btn-primary">Clear All Selected</button>
+                                        <!-- <apex:commandButton value="Clear All Selected" action="{!clearSelected}" rerender="bannerResultsPanel" styleclass="btn btn-lg btn-primary"/> -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group" style="font-size:14px">
+                                            <input type="number" name="allocateAllNumber" id="allocateAllNumber"  />
+                                           <!-- <apex:inputText value="{!allocateAllValue}" styleClass="form-control"/> -->
+                                           &nbsp;<strong> {!nationalInitiative.Unit_of_Measure__c}</strong>&nbsp;&nbsp;
+                                        <button type="button" class="btn btn-lg btn-default" id="applyAllocationsBtn">Apply</button>
+                                        <!-- <apex:commandButton action="{!applyTargetToSelected}" styleClass="btn btn-lg btn-default"  value="Apply" rerender="bannerResultsPanel"/> -->
+                                        <div id="selectItemsErrorMessage" style="display: none;color:red;">Select at least 2 Banners to Apply</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <apex:inputText id="searchName" value="{!searchedName}" StyleClass="form-control" html-placeholder="Search Name" onkeyup="handleEnterKey(event, this);" /><span class="fa fa-search fa-4  errspan" style="cursor: pointer;" onclick="updateSearch();" oncomplete="initPage();"></span>
+                                            <br/>
+                                            <a href="javascript:clearSearch();">Clear Search</a> to reset customer results
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <!--<h4>Client Details</h4>-->
+                                        <div class="btn-group btn-toggle" >
+                                            <apex:commandButton value="Show Selected" action="{!showSelected}" rerender="bannerResultsPanel" styleclass="btn btn-lg btn-default" oncomplete="initPage()"/>
+                                            <apex:commandButton value="Show All" action="{!showAll}" rerender="bannerResultsPanel" styleclass="btn btn-lg btn-primary active" oncomplete="initPage()"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--/Filters row-->
+
+                                <apex:outputPanel styleClass="row" style="white-space: initial;font-size: 14px;line-height: 1.5;font-weight:bold; color:blue;" rendered="{!isCLTUser}">
+                                   <div style="width:98%; text-align:center;"> If you do not see any Banner and/or Sub-Banner accounts where you should have responsibility to allocate a target,<br/>please contact your Business Administrator to update your Account Team permissions on that account to Read/Write.
+                                   </div>
+                                   <div style="width:98%; text-align:center; color:red; font-size: 13px;">
+                                   You must select the checkbox of the parent NBA in order for the Sub-Banner allocation changes to take effect.
+                                   </div>
+                                </apex:outputPanel>
+                                <!-- Accordian Adding Here   -->
+
+                                <div class="row" id="selected">
+                                    <div class="col-xs-12">
+                                    <apex:outputPanel id="bannerResultsPanel">
+                                        <apex:repeat value="{!bannerResultsOffset}" var="bnr" >
+                                            <div class="panel-group" id="accordion">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" style="height: 55px;">
+                                                        <h4 class="panel-title">
+                                                            <span class="col-xs-4">
+                                                                <apex:inputCheckbox value="{!bannerResults[bnr].checked}" StyleClass="check_individual_all" style="vertical-align:top"/>
+                                                                <span style="font-size:14px;  display:inline-block; width:320px; font-weight:normal;" data-id='{!bannerResults[bnr].ids}' id="{!bannerResults[bnr].ids}">{!bannerResults[bnr].name}</span>
+                                                            </span>
+                                                            <!--  Added so we can see the related CCR Id for debugging - Coastal Cloud
+                                                            <span class="col-xs-1" style="font-size:14px;font-weight:normal">
+                                                                <span style="line-height:33px;font-size:14px;font-weight:normal;"> CCR : </span> {!bannerResults[bnr].ccIds}
+                                                            </span>
+                                                            -->
+                                                            <span class="col-xs-1" style="font-size:14px;font-weight:normal">
+                                                                <span style="line-height:33px;font-size:14px;font-weight:normal;"> CCT : </span> {!bannerResults[bnr].clientCustomerTier}
+                                                            </span>
+                                                            <span class="col-xs-2" style="font-size:14px;font-weight:normal">
+                                                                <span style="line-height:33px;font-size:14px;font-weight:normal;"> Allocated Target : </span> {!bannerResults[bnr].target}
+                                                            </span>
+                                                            <span class="col-xs-1" style="font-size:14px;font-weight:normal;"><apex:outputText rendered="{!NOT(ISBLANK(TRIM(bannerResults[bnr].target)))}">Revised Target :</apex:outputText> </span>
+                                                            <span class="col-xs-2">
+                                                                <apex:inputText value="{!bannerResults[bnr].proposed}" styleclass="form-control text-disable bannerProposed" size="50"/>
+                                                            </span>
+                                                            <span class="col-xs-2">
+                                                                <a data-toggle="collapse" style="line-height:33px;font-size:14px;font-weight:normal;" class="pull-right" data-parent="#accordion" href="#collapse{!bannerResults[bnr].index}">Allocate Sub-banner<i class="glyphicon glyphicon-chevron-down"> </i> </a>
+                                                            </span>
+                                                        </h4>
+                                                    </div>
+                                                    <apex:pageBlock >
+                                                        <div id="collapse{!bannerResults[bnr].index}" class="panel-collapse collapse">
+                                                            <div class="panel-body banner-section">
+                                                                <table class="table">
+                                                                    <apex:repeat value="{!bannerResults[bnr].nbaWrap}" var="ac">
+                                                                        <tr>
+                                                                            <td style="padding:0px 3px 0px 9px" ><apex:inputCheckbox styleClass="check_main" value="{!ac.isChecked}" style="margin-left: -5px;"/></td>
+                                                                            <td class="col-xs-4" style="font-size:14px;padding:0px" data-id="{!ac.acId}" data-bannerId="{!ac.bannerAccountId}">{!ac.name}</td>
+                                                                            <td class="col-xs-1" style="font-size:14px;padding:0px">CCT : {!ac.clientCustomerTier}</td>
+                                                                            <td class="col-xs-2" style="font-size:14px;padding:0px">Allocated Target : {!ac.allocated}</td>
+                                                                            <td class="col-xs-1" style="font-size:14px;padding:0px"><apex:outputText rendered="{!NOT(ISBLANK(ac.allocated))}">Revised Target :</apex:outputText></td>
+                                                                            <td class="col-xs-2">
+                                                                                <apex:inputText value="{!ac.proposedTarget}" styleclass="form-control subBannerProposed" size="50"/>
+                                                                            </td>
+                                                                            <td class="col-xs-2"></td>
+                                                                        </tr>
+                                                                    </apex:repeat>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </apex:pageBlock>
+                                                </div>
+                                            </div>
+                                        </apex:repeat>
+
+                                        <apex:panelGroup style="width:100%;text-align:center;display:block;margin:5px 0 0 0;">
+                                             <apex:commandButton value="First Page" rerender="bannerResultsPanel" action="{!FirstPage}" disabled="{!prev}" oncomplete="initPage();" />
+                                             <apex:commandButton value="Previous" rerender="bannerResultsPanel" action="{!previous}" disabled="{!prev}" oncomplete="initPage();" />
+                                             <apex:commandButton value="Next" rerender="bannerResultsPanel" action="{!next}" disabled="{!nxt}" oncomplete="initPage();" />
+                                             <apex:commandButton value="Last Page" rerender="bannerResultsPanel" action="{!LastPage}" disabled="{!nxt}" oncomplete="initPage();"/>
+                                             <apex:outputText value="{!displayRange}" style="float:left !important;"/>
+                                             <apex:outputText value="Page {!PageNumber} of {!TotalPages}" style="float:right !important;"/>
+                                        </apex:panelGroup>
+                                        <apex:inputHidden value="{!totalRecs}" id="totalRecs"/>
+                                        <apex:inputHidden value="{!totalSubBannerRecs}" id="totalSubBannerRecs"/>
+                                        <apex:inputHidden value="{!selectedBanners}" id="selectedBannerIds"/>
+                                        <apex:inputHidden value="{!selectedSubBanners}" id="selectedSubBannerIds"/>
+                                        <apex:inputHidden value="{!bannerResultsList}" id="allBannerResults"/>
+                                    </apex:outputpanel>
+                                </div>
+                            </div>
+
+                                <div class="form-group col-md-12 text-center pbButton " style="margin-top: 45px;">
+                                    <div id="browse_app">
+                                        <input type="submit" class="dummy" style="opacity:0;cursor:default;" onclick="return false;" tab-index="-1"/>
+                                        <input type="button" onclick="goBack();" value="Go Back" class="btn btn-default"  />
+                                        <apex:commandButton action="{!saveAndExit}" value="Save & Exit" style="margin-top:0px;" styleclass="btn btn-default btn-lg"/>
+                                        <apex:commandButton action="{!saveAndNewInitiative}" value="Save & New Initiative" style="margin-top:0px;" styleclass="btn btn-default btn-lg" rendered="{!NOT(isCLTUser)}"/>
+                                        <!-- <apex:commandButton action="{!allocateAndExit}" value="Allocate & Exit" styleclass="btn btn-lg btn-default" status="status"/> -->
+                                        <button class="btn btn-lg btn-default" id="allocateAndExitBtn">Allocate &amp; Exit</button>
+                                        <apex:outputText escape="false" rendered="{!NOT(isCLTUser)}">
+                                            <button class="btn btn-lg btn-default" id="allocateAndNewInitiativeBtn">Allocate &amp; New Initiative</button>
+                                        </apex:outputText>
+                                        <!-- <apex:commandButton action="{!allocateAndNewInitiative}" value="Allocate & New Initiative" styleclass="btn btn-lg btn-default" status="status"/> -->
+                                        <apex:commandButton action="{!Exit}" value="Exit" styleclass="btn btn-lg btn-default" status="status"/>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </apex:pageblock>
+                </div>
+                </body>
+            </apex:outputPanel>
+        </apex:form>
+    </html>
+</apex:page>

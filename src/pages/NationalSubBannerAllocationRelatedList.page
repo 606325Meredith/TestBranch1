@@ -1,0 +1,44 @@
+<apex:page standardController="Client_Customer_Relationship__c" extensions="NationalSubBannerRelatedListController" standardStylesheets="true">
+    <apex:form >
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script>
+		function closeWindow() {
+			window.close();
+        }
+	</script>
+		<apex:Pageblock >
+            <apex:pageBlockButtons location="top">
+
+            </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!nationalSubBanner}" var="Ini">
+						<apex:column headerValue="Action" width="15%">
+							<a href="/{!Ini.id}/e" onclick="window.open='/{!Ini.id}/e';" target="_parent">Edit</a>
+                                <apex:outputPanel rendered="{!Checkpermissions}">
+									|&nbsp;
+									<apex:commandLink value="Delete" action="{!deleteNationalSubBannerAllocation}">
+										<apex:param value="{!Ini.id}" name="recordId2" assignTo="{!recordId2}"/>
+									</apex:commandLink>
+                                </apex:outputPanel>
+						</apex:column>
+						<apex:column headerValue="NSBA Name" width="105px">
+							<a href="/{!Ini.id}" onclick="window.open='/{!Ini.id}';" target="_parent">{!Ini.Name}</a>
+						</apex:column>
+                        <apex:column headerValue="Created By" value="{!Ini.CreatedBy.name}"></apex:column>
+						<apex:column headerValue="Allocated Target" value="{!Ini.Allocated_Target__c}"></apex:column>
+                        <apex:column headerValue="Revised Target" value="{!Ini.Proposed_Target__c}"></apex:column>
+						<apex:column headerValue="Unit of Measure" value="{!Ini.Unit_of_Measure__c}"></apex:column>
+						<apex:column headerValue="Initiative" value="{!Ini.Initiatives__c}"></apex:column>
+                        <apex:column headerValue="Objectives" value="{!Ini.Objectives__c}"></apex:column>
+						<apex:column headerValue="Initiative Start Date" value="{!Ini.Initiative_Start_Date__c}"></apex:column>
+						<apex:column headerValue="Initiative End Date" value="{!Ini.Initiative_End_date__c}"></apex:column>
+						<!--<apex:column value="{!Ini.Status__c}" headerValue="Status"/>-->
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+				<apex:pageBlockSection columns="1">
+					<apex:outputText rendered="{!(nationalSubBanner.size = 0)}" value="No records to display" />
+				</apex:pageBlockSection>
+		</apex:Pageblock>
+	</apex:form>
+</apex:page>

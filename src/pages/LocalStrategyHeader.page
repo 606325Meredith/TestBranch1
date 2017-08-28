@@ -1,0 +1,190 @@
+<apex:page showheader="false" controller="LocalStrategyController" sidebar="true" showHeader="true">
+    <apex:form id="form">
+        <html lang="en">
+
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <title>Local Strategy Header</title>
+            <link rel="stylesheet" href="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/css/bootstrap.min.css')}" />
+            <!--<script type="text/javascript" src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/bootstrap-datepicker.js')}">
+           </script>-->
+            <script type="text/javascript">
+            // When the document is ready
+            /*  $(document).ready(function () {
+                
+                $('.startDate').datepicker({
+                    format: "dd/mm/yyyy"
+                }); 
+            
+                 $('#endDate').datepicker({
+                    format: "dd/mm/yyyy"
+                });  
+            
+            });*/
+            </script>
+            <style>
+            .form-control {
+                font-weight: normal;
+            }
+            
+            label {
+                display: inline-block;
+                max-width: 100%;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            
+            .bg-block {
+                padding: 10px;
+            }
+            
+            .bg-block .bPageBlock {
+                background-color: #fff !important;
+                border: 0px !important;
+            }
+            
+            h1 {
+                font-size: 24px;
+                color: #807f83;
+                margin: 0px 0px 15px 0px;
+                display: block;
+                font-family: Trebuchet MS;
+            }
+            
+            #browse_app .btn {
+                margin: 0px 8px 0px 0px;
+            }
+            
+            .dateOnlyInput input {
+                display: inline;
+                width: 7em;
+            }
+            
+            .btn-default {
+                color: #fff !important;
+                background-color: #16325c !important;
+                border-color: #ccc;
+            }
+            
+            .btn {
+                display: inline-block;
+                padding: 5px 10px !important;
+                margin-bottom: 0;
+                font-size: 12px !important;
+                font-weight: 400;
+                line-height: 1.42857143;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: middle;
+                cursor: pointer;
+                background-image: none !important;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            </style>
+        </head>
+
+        <body class="bootstrap-sf1">
+            <div class="bg-block">
+                <apex:pageblock >
+                    <!--<div class="container header">-->
+                    <div>
+                        <div class="row">
+                            <!--<div class="col-xs-12 head" style="padding: 0px;">-->
+                            <div>
+                                <h1>Strategy Header Creation</h1>
+                            </div>
+                            <form id="form" role="form" name="form" class="no-radius">
+                                <apex:pageMessages id="showmsg"></apex:pageMessages>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <label for="name">Strategy Name <span>*</span></label>
+                                            <apex:inputfield value="{!localStrategy.Name}" html-name="name" id="name" styleclass="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-6 ">
+                                        <div class="form-group">
+                                            <label for="name">National Strategy <span>*</span></label>
+                                            <apex:selectList size="1" multiselect="false" value="{!NSValue}" styleclass="form-control">
+                                                <apex:selectOptions value="{!NSOptions}" />
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <label for="year">Strategy Year <span>*</span></label>
+                                            <apex:inputfield value="{!localStrategy.Year__c}" html-name="year" id="year" styleclass="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <label for="year" style="display:block">Strategy Period <span>*</span></label>
+                                            <!--<p>  
+                                    <input  type="text"  placeholder="click to show datepicker" value="{!localStrategystartdate}"  id="startDate" class="form-control2 startDate" onchange="populateStartDate()" />                                     
+                                    
+                                    <i class="glyphicon glyphicon-calendar" style="margin-left: -20px;"></i>   
+                                    <apex:inputHidden id="startDateHiddn" value="{!localStrategystartdate}" />
+                                    <span style="padding: 28px;">  To  </span>
+                                    <input  type="text"  placeholder="click to show datepicker"  id="endDate" value="{!localStrategyenddate}" class="form-control2 endDate" onchange="populateEndDate()"/>                                         
+                                    <i class="glyphicon glyphicon-calendar" style="margin-left: -20px;"></i> 
+                                    <apex:inputHidden id="endDateHiddn" value="{!localStrategyenddate}" />
+                                </p>-->
+                                            <div class="col-xs-3" style="padding:0px">
+                                                <apex:inputfield value="{!localStrategy.Strategy_Period_Start__c}" styleclass="form-control "></apex:inputfield>
+                                            </div>
+                                            <span style="padding: 10px;display:inline-block;float:left;font-weight:bold"> To </span>
+                                            <div class="col-xs-3" style="padding:0px">
+                                                <apex:inputfield value="{!localStrategy.Strategy_Period_End__c}" styleclass="form-control "></apex:inputfield>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <label for="email">Strategy Type</label>
+                                            <apex:outputLabel value="{!strategyType}" html-name="typeyear" id="typeyear" styleclass="form-control" html-disabled="disabled" />
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <label for="Status">Status <span>*</span></label>
+                                            <apex:inputfield value="{!localStrategy.Status__c}" html-name="Status" id="Status" styleclass="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group col-xs-12 text-center" style="margin-top: 45px;">
+                                    <div id="browse_app" class="pbButton">
+                                        <apex:commandButton value="Save & Exit" action="{!SaveLocalStrategy}" styleclass="btn btn-default btn-lg" />
+                                        <!-- <apex:commandButton value="Save and Create Strategy Item &nbsp;<i class="fa fa-angle-right" aria-hidden="true"></i>" action="{!SaveAndCreateStrategyItem}" styleclass="btn btn-lg btn-default" /> -->
+                                        <apex:commandButton value="Save & New Initiative" action="{!SaveAndCreateStrategyItem}" styleclass="btn btn-lg btn-default" />
+                                        <apex:commandButton value="Exit" action="{!ExitHeader}" styleclass="btn btn-lg btn-default" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+                </apex:pageblock>
+            </div>
+        </body>
+        <script>
+        function populateStartDate() {
+            document.getElementById('{!$Component.form.startDateHiddn}').value = $(startDate).val();
+        }
+
+        function populateEndDate() {
+            document.getElementById('{!$Component.form.endDateHiddn}').value = $(endDate).val();
+        }
+        </script>
+
+        </html>
+    </apex:form>
+</apex:page>

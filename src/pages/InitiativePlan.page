@@ -1,0 +1,1284 @@
+<!--**************************************************************************************
+Page Name:  CustomerVisitPlan
+Version     : 1.0
+Created Date    : 25 Jul 2016
+Description    : Custom Page to create a Customer Visit.
+Modification Log :
+-----------------------------------------------------------------------------
+* Developer                   Date                   Description
+* ----------------------------------------------------------------------------
+* Yashmith Kumar        25 Jul 2016             Original Version
+*************************************************************************************-->
+<apex:page sidebar="true" showHeader="true" StandardController="Customer_Visit__c" extensions="InitiativePlanExtension">
+    <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+            <title>Project</title>
+            <link rel="stylesheet" href="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/css/bootstrap.min.css')}" />
+            <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+            <script src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/jquery.min.js')}">
+            </script>
+            <script src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/bootstrap.min.js')}">
+            </script>
+            <script>
+                     $(document).ready(function() {
+                            $('.btn-toggle').click(function() {
+                            $(this).find('.btn').toggleClass('active');
+                            if ($(this).find('.btn-primary').size()>0) {
+                             $(this).find('.btn').toggleClass('btn-primary');
+                              }
+                             $(this).find('.btn').toggleClass('btn-default');
+                            });
+
+                            if('{!$CurrentPage.parameters.custVisitId}' != '' && '{!$CurrentPage.parameters.clone}' != 'true'){
+                                disableClientCust();
+                            }
+                            else if('{!$CurrentPage.parameters.clone}' == 'true'){
+                                enableAll();
+                            }
+                            if('{!clientsSelected}' != ''){
+                                populateSelectedNumbers(".panel_1",'{!clientsSelected}','Client Accounts');
+                            }
+                            if('{!customersSelected}' != ''){
+                                populateSelectedNumbers(".panel_2",'{!customersSelected}','Customer Accounts');
+                            }
+                            if('{!initiativesSelected}' != ''){
+                                populateSelectedInitiatives(".panel_3",'{!initiativesSelected}','Initiatives');
+                            }
+                            if('{!usersSelected}' != ''){
+                                populateSelectedNumbers(".panel_4",'{!usersSelected}','Users');
+                            }
+                            $('[data-toggle="tooltip"]').tooltip();
+                      });
+
+                      function populateSelectedNumbers(panelNameInit, selectedItem, typeOfAccount){
+                          var selectedItems = selectedItem.split(' | ');
+                          $(panelNameInit).find(".items_text").html(selectedItems.length +" "+typeOfAccount+" selected");
+                      }
+
+                      function populateSelectedInitiatives(panelNameInit, selectedItem, typeOfAccount){
+                          var selectedItems = selectedItem.split(' | ');
+                          $(panelNameInit).find(".items_text").html(selectedItems.length +" Initiative Relationships selected");
+                      }
+
+                      var handleEnterKey = function(e, elem){
+                          if(e.keyCode === 13){
+                            e.preventDefault();
+                            $(elem).next(".input-group-btn").find("a").trigger("click");
+                          }
+                      };
+
+
+            </script>
+             <script type="text/javascript" src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/js/bootstrap-datepicker.js')}">
+            </script>
+            <style>
+                .panel-heading a{
+                    background-color:transparent !important;
+                }
+                .dropdown-menu li{
+                line-height:14px !important;
+                }
+                .form-control2 {
+                background-color: #fff;
+                background-image: none;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+                color: #555;
+                font-size: 14px;
+                height: 34px;
+                line-height: 1.42857;
+                padding: 6px 13px;
+                transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+                width: 180px;
+                }
+
+                .phead {
+                    color: #000;
+                    font-size: 16px;
+                }
+                .panel-info.inactive{opacity:0.3;}
+
+                .phead .number {
+                background-color: #979797;
+                border-radius: 14px;
+                color: #000;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 5px 9px;
+                }
+
+                .phead .items_text {
+                        float: right;
+                        width: 270px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        font-style: italic;
+                        font-size: 14px;
+                        text-align: right;
+                    }
+
+
+                .panel-info>.panel-heading+.panel-collapse>.panel-body {
+                    border-top-color: #8c8c8c !important;
+                }
+
+                .headerFormat {height:10px; background-color: #c9c9c9; padding:8px;}
+                .columnFormat {height:10px;padding:10px;}
+
+                #subpop2Div1 label{
+                padding:10px;
+                font-weight:normal;
+                }
+                #subpop2Div2 label{
+                padding:10px;
+                font-weight:normal;
+                }
+                .outer td{
+                    word-break: break-all;
+                }
+
+
+                .form-control {
+                    font-weight: normal;
+                }
+
+                label {
+                    display: inline-block;
+                    max-width: 100%;
+                    margin-bottom: 5px;
+                    font-weight: bold;
+                }
+
+                .bg-block {
+                    padding: 10px;
+                    min-width:1280px;
+                }
+
+                .bg-block .bPageBlock {
+                    background-color: #fff !important;
+                    border: 0px !important;
+                }
+
+                h1 {
+                    font-size: 24px;
+                    color: #807f83;
+                    margin: 0px 0px 15px 0px;
+                    display: block;
+                    font-family: Trebuchet MS;
+                }
+
+                .pbButton .btn {
+                    margin: 0px 8px 0px 0px;
+                }
+
+                .dateOnlyInput input {
+                    display: inline;
+                    width: 7em;
+                }
+
+                .form-group span select {
+                    width: 100%;
+                    height: 34px;
+                    padding: 6px 12px;
+                    background-color: #fff;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                }
+
+                input[type=radio] {
+                    margin: 4px 4px 0px;
+                }
+
+                .dropdown a {
+                    background-color: #fff;
+                    text-decoration: none;
+                    color: #000;
+                    padding: 10px;
+                    border: 1px solid #c9c9c9;
+                    width: 100%;
+                    display: block;
+                    border-radius: 4px;
+                    font-size: 14px;
+                }
+                    .dropdown-menu label{
+                        font-weight:normal;
+                    margin-left:5px;
+                    }
+                    .pbButton .btn {
+                    margin: 0px 8px 0px 0px;
+                }
+                    .apexp .bPageBlock p{
+                        font-size:14px;
+                    line-height:20px;
+                    margin:0px;
+                    }
+                    .btn-default {
+                    color: #fff !important;
+                    background-color: #16325c !important;
+                    border-color: #ccc;
+                }
+
+                .btn {
+                    display: inline-block;
+                    padding: 5px 10px !important;
+                    margin-bottom: 0;
+                    font-size: 12px !important;
+                    font-weight: 400;
+                    line-height: 1.42857143;
+                    text-align: center;
+                    white-space: nowrap;
+                    vertical-align: middle;
+                    cursor: pointer;
+                    background-image: none !important;
+                    border: 1px solid transparent;
+                    border-radius: 4px;
+                }
+            </style>
+        </head>
+        <body class="bootstrap-sf1">
+            <div class="bg-block">
+    <apex:pageblock >
+
+      <apex:outputpanel id="messagePanel"><apex:pageMessages ></apex:pageMessages></apex:outputPanel>
+      <apex:outputPanel rendered="{!IF(isCloneable && isEditable,true,false)}">
+      <!--<div class="container header">-->
+      <div>
+            <div class="row">
+                <!--<div class="col-xs-12 head" style="padding: 0px;">-->
+                <div> <!--<img src="{!URLFOR($Resource.AcostaUIResource,'AcostaUIResource/image/logo.png')}" style="width:150px;height:50px;"/>-->
+                    <h1><div class="plan">Initiative Execution Plan</div></h1>
+                </div>
+
+                    <apex:form id="form" styleclass="no-radius">
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label for="Visior Name" >Initiative Execution Plan Name</label>
+                                    <apex:inputField value="{!custVisitInput.Name}" id="visitName" styleclass="form-control visitName"/>
+                                </div>
+                            </div>
+                            <div class="col-xs-6 ">
+                                <div class="form-group">
+                                    <label for="year" >Initiative Execution Plan Period</label><br/>
+                                        <div class="col-xs-4" style="padding:0px">
+                                        <apex:inputField id="startDate" value="{!custVisitInput.Start_Date__c}" styleclass="startDate form-control"/>
+                                    </div>
+                                    <span style="padding: 10px;display:inline-block;float:left;font-weight:bold">  To  </span>
+                                    <div class="col-xs-3" style="padding:0px">
+                                        <apex:inputField id="endDate" value="{!custVisitInput.End_Date__c}" styleclass="endDate form-control"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xs-12">
+                                <!-- Panel 2-->
+                                <div class="panel-group" id="accordion">
+                                    <div class="panel panel-info panel_1">
+                                        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#collapseOne">
+                                            <h4 class="panel-title phead accordion-toggle"><span id="num" class="number">1</span> Client Accounts  <span class="items_text"></span> </h4>
+                                        </div>
+                                        <div id="collapseOne" class="panel-collapse collapse">
+                                            <div class="panel-body">
+                                                <div class="col-xs-12">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="selected_Clients">Select Client Accounts</label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="clientpanel">
+                                                                <apex:inputText value="{!clientsSelected}" styleclass="form-control selected_Clients" disabled="true"/>
+                                                                </apex:outputPanel>
+                                                                <span class="input-group-btn" style="border:1px solid #ccc;padding:8px">
+                                                                    <apex:commandLink action="{!showPopup}" type="image/png" onComplete="removeClientSearch();"  rerender="popupClient,ClntFilters" style="color:grey">
+                                                                        <span style="font-size:14px !important" class="fa fa-search fa-4  errspan" data-target="#myModal1" data-toggle="modal"></span>
+                                                                        <apex:param name="curSelector" value="ClientSelector"/>
+                                                                    </apex:commandLink>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="selected_Clients">Selected Client Accounts</label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="clientpanel_selected">
+                                                                    <apex:outputText value="{!clientsSelectedName}" escape="false"/>
+                                                                </apex:outputpanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel panel-info panel_2 inactive">
+                                        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#collapseTwo">
+                                            <h4 class="panel-title phead accordion-toggle"><span class="number">2</span> Customer Accounts  <span class="items_text"></span></h4>
+                                        </div>
+                                        <div id="collapseTwo disabled" class="panel-collapse collapse">
+                                            <div class="panel-body">
+                                                <div class="col-xs-12">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="Cust">Select Customer Accounts
+                                                            </label>
+                                                            <div class="input-group">
+                                                              <apex:outputpanel id="custPanel">
+                                                                <apex:inputText value="{!customersSelected}" styleclass="form-control selected_Customers" disabled="true"/>
+                                                              </apex:outputPanel>
+                                                                <span class="input-group-btn" style="border:1px solid #ccc;padding:8px">
+                                                                    <apex:commandLink action="{!showPopup}" type="image/png" onComplete="removeCustSearch();" rerender="popupCustomer,CustFilters" style="color:grey">
+                                                                        <span style="font-size:14px !important" class="fa fa-search fa-4  errspan" data-target="#myModal2" data-toggle="modal"></span>
+                                                                        <apex:param name="curSelector" value="CustSelector"/>
+                                                                    </apex:commandLink>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="selected_Clients">Selected Customer Accounts</label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="custPanel_selected">
+                                                                    <apex:outputText value="{!customersSelectedName}" escape="false"/>
+                                                                </apex:outputpanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel panel-info panel_3 inactive">
+                                        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#collapseThree">
+                                            <h4 class="panel-title phead accordion-toggle"><span class="number">3</span> Initiatives  <span class="items_text"></span> </h4>
+                                        </div>
+                                        <div id="collapseThree disabled" class="panel-collapse collapse">
+                                            <div class="panel-body">
+                                                <div class="col-xs-12">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="Init">Select Initiatives
+                                                            </label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="InitPanel">
+                                                                    <apex:inputText value="{!initiativesSelected}" styleclass="form-control selected_Initiatives" disabled="true"/>
+                                                                </apex:outputPanel>
+                                                                <span class="input-group-btn" style="border:1px solid #ccc;padding:8px">
+                                                                    <apex:commandLink action="{!showPopup}" type="image/png" rerender="popupInitiative,initInitFilters,initObjFilters,initBanFilters,initSBFilters,initOtherFilters" style="color:grey">
+                                                                        <span style="font-size:14px !important" class="fa fa-search fa-4  errspan" data-target="#myModal3" data-toggle="modal"></span>
+                                                                        <apex:param name="curSelector" value="InitSelector"/>
+                                                                    </apex:commandLink>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="selected_Clients">Selected Initiatives</label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="InitPanel_selected">
+                                                                    <apex:outputText value="{!initiativesSelectedName}" escape="false"/>
+                                                                </apex:outputpanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel panel-info panel_4 inactive">
+                                        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#collapseFour">
+                                            <h4 class="panel-title phead accordion-toggle"><span class="number">4</span> Users  <span class="items_text"></span></h4>
+                                        </div>
+                                        <div id="collapseFour disabled" class="panel-collapse collapse">
+                                            <div class="panel-body">
+                                                <div class="col-xs-12">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="client">Select Users
+                                                            </label>
+                                                            <div class="input-group">
+                                                              <apex:outputpanel id="UserPanel">
+                                                                <apex:inputText value="{!usersSelected}" styleclass="form-control selected_Users" disabled="true"/>
+                                                              </apex:outputPanel>
+                                                                <span class="input-group-btn" style="border:1px solid #ccc;padding:8px">
+                                                                    <apex:commandLink action="{!showPopup}" type="image/png" rerender="popupUser,userFilters" style="color:grey">
+                                                                        <span style="font-size:14px !important"  class="fa fa-search fa-4  errspan" data-target="#myModal4" data-toggle="modal"></span>
+                                                                        <apex:param name="curSelector" value="UserSelector"/>
+                                                                    </apex:commandLink>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label for="selected_Clients">Selected Users</label>
+                                                            <div class="input-group">
+                                                                <apex:outputpanel id="UserPanel_selected">
+                                                                    <apex:outputText value="{!usersSelectedName}" escape="false"/>
+                                                                </apex:outputpanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End of panel-2 -->
+                                <div class="form-group col-xs-12 text-center" style="margin-top: 45px;">
+                                    <div id="browse_app">
+                                        <apex:outputPanel id="btnpanel">
+                                            <apex:commandLink action="{!showPopup}" rerender="clientpanel_selected2,custPanel_selected2,InitPanel_selected2,UserPanel_selected2" styleclass="btn btn-default btn-lg" style="margin-top:0px;"><span data-target="#myModal5" data-toggle="modal">View Summary</span><apex:param name="curSelector" value="SummarySelector"/></apex:commandLink>&nbsp;&nbsp;&nbsp;
+                                            <apex:commandButton onclick="if (validateInputs('Save') == false){return false;}" reRender="btnpanel,messagePanel" onComplete="disableClientCust();" styleclass="btn btn-default btn-lg" style="margin-top:0px;" value="Save" action="{!saveVisit}"/>&nbsp;&nbsp;&nbsp;
+                                            <apex:commandButton onclick="return validateInputs('Save');" styleclass="btn btn-default btn-lg" style="margin-top:0px;" value="Save & Exit" action="{!saveANdExit}"/>&nbsp;&nbsp;&nbsp;
+                                            <apex:commandButton styleclass="btn btn-default btn-lg" style="margin-top:0px;" value="Submit" onclick="return validateInputs('Submit');" action="{!submitVisit}"/>&nbsp;&nbsp;&nbsp;
+                                            <apex:commandButton styleclass="btn btn-default btn-lg" style="margin-top:0px;" value="Exit" action="{!exit}"/>
+                                            <br/><br/>
+                                            <apex:outputLabel value="{!$Label.Initiative_Plan_Save_Message}" rendered="{!isSaved}" style="color:green"/>
+                                        </apex:outputpanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  Client Popup  -->
+                        <div class="modal fade" id="myModal1" role="dialog">
+                            <div class="modal-dialog" style="width: 980px">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title" style="font-size:16px">Client Accounts</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                            <apex:inputText value="{!searchCriteria}" id="searchClients" html-name="searchClients" html-class="form-control clientSearch" html-placeholder="Search for the clients here" onkeypress="handleEnterKey(event, this);"/>
+                                            <span class="input-group-btn" style="border:1px solid #ccc;padding:8px"><apex:commandLink onClick="clientSearch();return false;" type="image/png" style="color:grey"><span class="fa fa-search fa-4  errspan" style="font-size:14px"></span></apex:commandLink></span>
+                                            </div>
+                                        </div>
+                                        <div id="navBar1">
+                                            <div class="panel panel-default">
+                                            <apex:outputpanel id="ClntFilters">
+                                                <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                                    <h4 style="font-size:14px">Filters</h4>
+                                                </div>
+
+                                              <div class="panel-body">
+                                                <div class="dropdown">
+                                                    <label for="Clients" style="margin-bottom: 18px;font-weight: normal;margin-top: 15px;margin-bottom: 5px;/* font-size: 14px; */font-weight: bold;">Level</label><br/>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Level <span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px; width: 25%; margin-top: 11px;">
+                                                        <apex:repeat value="{!listClientlevelFiltrWrap}" var="a">
+                                                            <li style="margin-left: 0px;"><apex:inputCheckbox value="{!a.checked}"/>&nbsp;{!a.filtrLabel}</li>
+                                                        </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected client level values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selClientLevel">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedClientLevels}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                            </apex:outputPanel>
+
+                                            <div class="panel-footer" style="margin-top: 15px; text-align: center;">
+                                                <apex:commandButton styleclass="btn btn-default" value="Apply Filters" action="{!searchClientsUI}" rerender="popupClient,selClientLevel"/>
+                                                <apex:commandButton styleclass="btn btn-primary" value="Clear Filters" action="{!clearFilter}" rerender="popupClient,ClntFilters"/>
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <div class="details1">
+                                            <!--<h4>Client Details</h4>-->
+                                            <div class="btn-group btn-toggle" style="float: right;margin-top: -6px;position: relative;top: 34px;" >
+                                              <apex:commandButton value="Show Selected" action="{!showSelected}" rerender="clientDetail" styleclass="btn btn-lg btn-default"/>
+                                              <apex:commandButton value="All" action="{!showAll}" rerender="clientDetail" styleclass="btn btn-lg btn-primary active"/>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <br/>
+
+                                        <apex:outputPanel id="popupClient">
+                                              <apex:pageBlock title="Client Details" id="clientDetail">
+                                                     <apex:dataTable value="{!listClientWrapper}" width="100%" var="a" border="1px" headerClass="headerFormat" >
+                                                         <apex:column width="4%" styleClass="columnFormat">
+                                                             <apex:facet name="header">
+                                                                 <c:Master_check_box_to_select_all_records ></c:Master_check_box_to_select_all_records>
+                                                             </apex:facet>
+                                                             <apex:inputCheckbox value="{!a.checked}"/>
+                                                         </apex:column>
+                                                         <apex:column width="30%" value="{!a.acc.Name}" headerValue="Account Name" styleClass="columnFormat"/>
+                                                         <apex:column width="20%" value="{!a.acc.Service_Type__c}" headerValue="Service Type" styleClass="columnFormat"/>
+                                                         <apex:column width="20%" value="{!a.acc.Level_Name__c}" headerValue="Level Name" styleClass="columnFormat"/>
+                                                         <apex:column width="20%" value="{!a.acc.Owner.Name}" headerValue="Account Owner Name" styleClass="columnFormat"/>
+                                                     </apex:dataTable>
+                                                     <BR/>
+                                                     <apex:panelGroup style="width:100%;text-align:center;display:block;margin:5px 0 0 0;">
+                                                         <apex:commandButton value="First Page" rerender="clientDetail" action="{!FirstPage}" disabled="{!prev}"/>
+                                                         <apex:commandButton value="Previous" rerender="clientDetail" action="{!previous}" disabled="{!prev}"/>
+                                                         <apex:commandButton value="Next" rerender="clientDetail" action="{!next}" disabled="{!nxt}"/>
+                                                         <apex:commandButton value="Last Page" rerender="clientDetail" action="{!LastPage}" disabled="{!nxt}"/>
+                                                         <apex:outputText value="Total Records: {!totalRecs }" style="float:left !important;"/>
+                                                         <apex:outputText value="Page {!PageNumber} of {!TotalPages}" style="float:right !important;"/>
+                                                     </apex:panelGroup>
+                                              </apex:pageBlock>
+                                        </apex:outputPanel>
+
+                                        <div class="modal-footer" style="border-top: none; padding: 15px; text-align: center;">
+                                           <apex:commandButton styleclass="btn btn-default" value="Add Selected" action="{!addSelected}" onComplete="populateCheckBoxes('myModal1','.selected_Clients','.panel_1','Client Accounts','.panel_2', true);" rerender="clientpanel,clientpanel_selected"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Client Popup Ended Here  -->
+                        <!-- Customer POPup Starts Here  -->
+                        <div class="modal fade" id="myModal2" role="dialog">
+                            <div class="modal-dialog" style="width: 980px">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title" style="font-size:16px">
+                                            Search for the customers
+                                        </h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                            <apex:inputText value="{!searchCriteria}" id="searchCustomer" html-name="searchCustomer" html-class="form-control custSearch" html-placeholder="Search for the customers here" onkeypress="handleEnterKey(event, this);"/>
+                                            <span class="input-group-btn" style="border:1px solid #ccc;padding:8px"><apex:commandLink onClick="custSearch();return false;" type="image/png" rerender="popupCustomer" style="color:grey"><span style="font-size:14px" class="fa fa-search fa-4  errspan" ></span></apex:commandLink>
+                                            </span></div>
+                                        </div>
+                                        <div id="navBar2">
+                                            <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                            <h4 style="padding: 10px;">Filters</h4>
+                                            </div>
+                                            <div class="panel-body">
+                                            <apex:outputpanel id="CustFilters">
+                                              <div style="margin-top:15px">
+                                              <div class="col-xs-6">
+                                                <div class="dropdown form-group">
+                                                    <label for="Initiatives" >Level</label><br/>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Level<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;width: 50%;  margin-top: 11px;">
+                                                    <apex:repeat value="{!listCustlevelFiltrWrap}" var="a">
+                                                        <li style="margin-left: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected customer level values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selCustLevel">
+                                                      <div class="col-xs-10">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedCustLevels}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+
+                                              <div class="col-xs-6">
+                                                <div class="dropdown form-group">
+                                                    <label for="Initiatives" >Customer Type</label><br/>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Customer Type<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px; width: 50%; margin-top: 11px;">
+                                                    <apex:repeat value="{!listCustTypeFiltrWarp}" var="a">
+                                                        <li style="margin-left: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected customer type values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selCustType">
+                                                      <div class="col-xs-10">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedCustomerTypes}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+
+                                              </div>
+                                           </apex:outputPanel>
+                                        </div>
+                                        <div class="panel-footer" style="text-align: center; margin-top: 25px;">
+                                            <apex:commandButton styleclass="btn btn-default" value="Apply Filters" action="{!searchCustomerUI}" rerender="popupCustomer,selCustLevel,selCustType"/>
+                                            <apex:commandButton styleclass="btn btn-primary" value="Clear Filters" action="{!clearFilter}" rerender="popupCustomer,CustFilters"/>
+                                        </div>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <div class="details1">
+                                            <!--<h4>Customer Details</h4>-->
+                                            <div class="btn-group btn-toggle" style="float: right;position:relative;top:23px " >
+                                              <apex:commandButton value="Show Selected" action="{!showSelected}" rerender="custDetail" styleclass="btn btn-lg btn-default"/>
+                                              <apex:commandButton value="All" action="{!showAll}" rerender="custDetail" styleclass="btn btn-lg btn-primary active"/>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <br/>
+
+                                        <apex:outputPanel id="popupCustomer">
+                                         <apex:pageBlock title="Customer Details" id="custDetail">
+                                             <apex:dataTable value="{!listCustWrapper}" width="100%" var="a" border="1px" headerClass="headerFormat" >
+                                                 <apex:column width="4%" styleClass="columnFormat">
+                                                     <apex:facet name="header">
+                                                         <c:Master_check_box_to_select_all_records ></c:Master_check_box_to_select_all_records>
+                                                     </apex:facet>
+                                                     <apex:inputCheckbox value="{!a.checked}"/>
+                                                 </apex:column>
+                                                 <apex:column width="30%" value="{!a.acc.Name}" headerValue="Account Name" styleClass="columnFormat"/>
+                                                 <apex:column width="20%" value="{!a.acc.Level_Name__c}" headerValue="Level Name" styleClass="columnFormat"/>
+                                                 <apex:column width="20%" value="{!a.acc.Customer_Type__c}" headerValue="Customer Type" styleClass="columnFormat"/>
+                                                 <apex:column width="20%" value="{!a.acc.Owner.Name}" headerValue="Account Owner Name" styleClass="columnFormat"/>
+                                             </apex:datatable>
+                                            <BR/>
+                                             <apex:panelGroup style="width:100%;text-align:center;display:block;margin:5px 0 0 0;">
+                                                 <apex:commandButton value="First Page" rerender="custDetail" action="{!FirstPage}" disabled="{!prev}"/>
+                                                 <apex:commandButton value="Previous" rerender="custDetail" action="{!previous}" disabled="{!prev}"/>
+                                                 <apex:commandButton value="Next" rerender="custDetail" action="{!next}" disabled="{!nxt}"/>
+                                                 <apex:commandButton value="Last Page" rerender="custDetail" action="{!LastPage}" disabled="{!nxt}"/>
+                                                 <apex:outputText value="Total Records: {!totalRecs }" style="float:left !important;"/>
+                                                 <apex:outputText value="Page {!PageNumber} of {!TotalPages}" style="float:right !important;"/>
+                                             </apex:panelGroup>
+                                         </apex:pageBlock>
+                                        </apex:outputPanel>
+                                        <div class="modal-footer" style="border-top: none; padding: 15px; text-align: center;">
+                                            <apex:commandButton styleClass="btn btn-default" value="Add Selected" action="{!addSelected}" onComplete="populateCheckBoxes('myModal2', '.selected_Customers', '.panel_2', 'Customer Accounts', '.panel_3', true);"  rerender="custPanel,custPanel_selected"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Customer Popup Ends Here  -->
+                        <!-- Initiative POPup Starts Here  -->
+                        <div class="modal fade" id="myModal3" role="dialog">
+                            <div class="modal-dialog" style="width: 980px">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title" style="font-size:16px">Initiatives</h4>
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        <div id="navBar3">
+                                            <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;margin-bottom:15px;display:block">
+                                            <h4 style="padding: 10px;">Filters</h4>
+                                            </div>
+                                            <div class="panel-body" >
+                                            <div ><div class="row">
+                                              <apex:outputPanel id="initInitFilters">
+
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Initiatives" style=" display: block;">Initiatives</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Initiatives<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;width:100%;  margin-top: -4px; ">
+                                                    <apex:repeat value="{!listIniFiltrWrap}" var="a">
+                                                        <li> <apex:inputCheckbox value="{!a.checked}">
+                                                           <apex:actionSupport event="onchange" action="{!refreshObjectiveFilter}" reRender="initObjFilters"/>
+                                                        </apex:inputCheckbox>
+                                                        &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected initiative values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selInitiative">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedInitiativesFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                              </apex:outputPanel>
+
+                                              <apex:outputPanel id="initObjFilters">
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Objectives" style=" display: block;">Objectives</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Objectives<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;width:100%;  margin-top: -4px;">
+                                                    <apex:repeat value="{!listObjFiltrWrap}" var="a">
+                                                        <li> <apex:inputCheckbox value="{!a.checked}">
+                                                            <apex:actionSupport event="onchange" action="{!refreshInitiativeFilter}" reRender="initInitFilters"/>
+                                                        </apex:inputCheckbox>
+                                                          &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected objective values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selObjective">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedObjectivesFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                              </apex:outputPanel>
+
+                                              <apex:outputPanel id="initBanFilters">
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Banner" style=" display: block;">Banner</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Banner<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;width:100%;  margin-top: -4px;">
+                                                    <apex:repeat value="{!listBannerFiltrWrap}" var="a">
+                                                        <li>
+                                                          <apex:inputCheckbox value="{!a.checked}">
+                                                           <apex:actionSupport event="onchange" action="{!refreshSubBannerFilter}" reRender="initSBFilters"/>
+                                                           </apex:inputCheckbox>
+                                                        &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected banner values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selBanner">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedBannerFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                              </apex:outputPanel>
+
+                                              <apex:outputPanel id="initSBFilters">
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Sub Banner" style="display: block;">Sub Banner</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Sub Banner<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;  margin-top: -4px; width: 100%;">
+                                                    <apex:repeat value="{!listSBFiltrWrap}" var="a">
+                                                        <li> <apex:inputCheckbox value="{!a.checked}">
+                                                        <apex:actionSupport event="onchange" action="{!refreshbannerFilter}" reRender="initBanFilters"/>
+                                                        </apex:inputCheckbox>
+                                                        &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected sub-banner values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selSubBanner">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedSubBannerFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                              </apex:outputPanel>
+
+                                            </div>
+                                        </div>
+                                          <apex:outputPanel id="initOtherFilters">
+                                            <div class="row">
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Bonus" style="display: block;">Bonus</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Bonus<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;  margin-top: -4px;width:100%">
+                                                    <apex:repeat value="{!listBonusFiltrWrap}" var="a">
+                                                        <li style="margin-left: 0px; line-height: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected bonus values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selBonus">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedBonusFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Bonus" style=" display: block;" >Priority</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Priority<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;  margin-top: -4px;width:100%">
+                                                    <apex:repeat value="{!listPriorityFiltrWrap}" var="a">
+                                                        <li style="margin-left: 0px; line-height: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected priority values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selPriority">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedPriorityFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+
+                                              <div class="col-xs-3">
+                                                <div class="dropdown form-group">
+                                                    <label for="Bonus" style=" display: block;">Allocation Status</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Allocation Status<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;width:100%;  margin-top: -4px;">
+                                                    <apex:repeat value="{!listAllocationFiltrWrap}" var="a">
+                                                        <li style="margin-left: 0px; line-height: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected allocation status values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selAllocStat">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedAllocationFiltr}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                            </div>
+                                          </apex:outputPanel>
+
+                                            </div>
+                                            <div class="panel-footer" style="text-align: center; margin-top: 30px;">
+                                                <apex:commandButton value="Apply Filters" styleclass="btn btn-default" action="{!searchInitiative}" rerender="popupInitiative,selInitiative,selObjective,selBanner,selSubBanner,selBonus,selPriority,selAllocStat"/>
+                                                <apex:commandButton value="Clear Filters" styleclass="btn btn-primary" action="{!clearFilter}" rerender="popupInitiative,initInitFilters,initObjFilters,initBanFilters,initSBFilters,initOtherFilters"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                        <div class="clearfix"></div>
+                                        <div class="details1">
+                                            <!--<h4>.headerFormat</h4>-->
+                                            <div class="btn-group btn-toggle" style="float: right; margin-top: -5px;position:relative;top:23px" >
+                                            <apex:commandButton value="Show Selected" action="{!showSelected}" rerender="InitDetail" styleclass="btn btn-lg btn-default"/>
+                                            <apex:commandButton value="All" action="{!showAll}" rerender="InitDetail" styleclass="btn btn-lg btn-primary active"/>
+                                        </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <br/>
+
+                                        <apex:outputPanel id="popupInitiative">
+                                         <apex:pageBlock title="Initiative Details" id="InitDetail">
+                                             <apex:dataTable value="{!listInitWrapperOffset}" width="900px" var="a" border="1px" headerClass="headerFormat" style="width:900px">
+                                                 <apex:column width="2%" styleClass="columnFormat">
+                                                     <apex:facet name="header">
+                                                         <c:Master_check_box_to_select_all_records ></c:Master_check_box_to_select_all_records>
+                                                     </apex:facet>
+                                                     <apex:inputCheckbox value="{!a.checked}"/>
+                                                 </apex:column>
+                                                 <apex:column width="7%" value="{!a.initiatives}" headerValue="Initiatives" styleClass="columnFormat"/>
+                                                 <apex:column width="7%" value="{!a.objectives}" headerValue="Objectives" styleClass="columnFormat"/>
+                                                 <apex:column width="10%" value="{!a.clientName}" headerValue="Client Name" styleClass="columnFormat"/>
+                                                 <apex:column width="10%" value="{!a.banner}" headerValue="Banner" styleClass="columnFormat"/>
+                                                 <apex:column width="10%" value="{!a.subBanner}" headerValue="Sub-Banner" styleClass="columnFormat"/>
+                                                 <apex:column width="10%" headerValue="Product" styleClass="columnFormat">
+                                                 <a href="#" data-toggle="tooltip" data-placement="right" title="{!a.product}">{!IF(LEN(a.product)>16,LEFT(a.product,14)+'...', a.product)}</a>
+                                                 </apex:column>
+                                                 <apex:column width="10%" headerValue="Product Group" styleClass="columnFormat">
+                                                 <a href="#" data-toggle="tooltip" data-placement="right" title="{!a.productGroup}">{!IF(LEN(a.productGroup)>16,LEFT(a.productGroup,14)+'...', a.productGroup)}</a>
+                                                 </apex:column>
+                                                 <apex:column width="10%" headerValue="Brand" styleClass="columnFormat">
+                                                 <a href="#" data-toggle="tooltip" data-placement="right" title="{!a.brand}">{!IF(LEN(a.brand)>16,LEFT(a.brand,14)+'...', a.brand)}</a>
+                                                 </apex:column>
+                                                 <apex:column width="4%" value="{!a.target}" headerValue="Target" styleClass="columnFormat"/>
+                                                 <apex:column width="4%" value="{!a.unitOfMeasure}" headerValue="Unit of Measure" styleClass="columnFormat"/>
+                                                 <apex:column width="5%" value="{!a.bonus}" headerValue="Bonus" styleClass="columnFormat"/>
+                                                 <apex:column width="10%" headerValue="Description" styleClass="columnFormat">
+                                                 <a href="#" data-toggle="tooltip" data-placement="right" title="{!a.description}">{!IF(LEN(a.description)>16,LEFT(a.description,14)+'...', a.description)}</a>
+                                                 </apex:column>
+                                             </apex:datatable>
+                                             <BR/>
+                                             <apex:panelGroup style="width:100%;text-align:center;display:block;margin:5px 0 0 0;">
+                                                 <apex:commandButton value="First Page" rerender="InitDetail" action="{!FirstPage}" disabled="{!prev}"/>
+                                                 <apex:commandButton value="Previous" rerender="InitDetail" action="{!previous}" disabled="{!prev}"/>
+                                                 <apex:commandButton value="Next" rerender="InitDetail" action="{!next}" disabled="{!nxt}"/>
+                                                 <apex:commandButton value="Last Page" rerender="InitDetail" action="{!LastPage}" disabled="{!nxt}"/>
+                                                 <apex:outputText value="Total Records: {!totalRecs }" style="float:left !important;"/>
+                                                 <apex:outputText value="Page {!PageNumber} of {!TotalPages}" style="float:right !important;"/>
+                                             </apex:panelGroup>
+                                         </apex:pageBlock>
+                                        </apex:outputPanel>
+
+                                        <div class="modal-footer" style="border-top: none; padding: 15px; text-align: center;">
+                                            <apex:commandButton styleClass="btn btn-default" value="Add Selected" action="{!addSelected}" onComplete="populateCheckBoxes('myModal3', '.selected_Initiatives', '.panel_3', 'Initiatives', '.panel_4', false);"  rerender="InitPanel,InitPanel_selected"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Initiative Popup Ends Here  -->
+                        <!-- user popup Starts Here  -->
+                        <div class="modal fade" id="myModal4" role="dialog">
+                            <div class="modal-dialog" style="width: 980px">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title" style="font-size:16px">Users</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                            <apex:inputText value="{!searchCriteria}" id="searchUser" html-name="searchUser" html-class="form-control" html-placeholder="Search for the users here" onkeypress="handleEnterKey(event, this);"/>
+                                            <span class="input-group-btn" style="border:1px solid #ccc;padding:8px"><apex:commandLink action="{!searchUserUI}" type="image/png" rerender="popupUser" style="color:grey"><span style="font-size:14px;" class="fa fa-search fa-4  errspan" ></span></apex:commandLink></span>
+                                            </div>
+                                        </div>
+                                        <div id="navBar4">
+                                            <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;margin-bottom:15px;display:block">
+                                            <h4 style="font-size:14px">Filters</h4>
+                                            </div>
+                                                <div class="panel-body">
+                                             <apex:outputpanel id="userFilters">
+                                              <div >
+                                              <div class="col-xs-6">
+                                                <div class="dropdown form-group">
+                                                    <label for="Bonus" >Account Name</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Account<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px; width:90%; margin-top: 12px; ">
+                                                    <apex:repeat value="{!listAccFilter}" var="a">
+                                                        <li style="margin-left: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected account values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selAcct">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedAccounts}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+
+                                              <div class="col-xs-6">
+                                                <div class="dropdown form-group">
+                                                    <label for="Bonus" style=" display: block; ">Account Team Role</label>
+                                                     <a id="dLabel" data-target="#" href="javascript:void(0);" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" style="background-color: #fff; text-decoration: none; color: #000; padding: 10px 12px 13px 14px; border: 1px solid #c9c9c9;">
+                                                        Select Account Team Role<span class="caret" style="float: right;margin-top: 7px"></span></a>
+
+                                                    <ul class="dropdown-menu" aria-labelledby="dLabel" style="padding: 12px;  margin-top: 12px; height: 200px; overflow: auto; width: 90%; ">
+                                                    <apex:repeat value="{!listAccTeamFilter}" var="a">
+                                                        <li style="margin-left: 0px;"> <apex:inputCheckbox value="{!a.checked}"/> &nbsp; {!a.filtrLabel}</li>
+                                                    </apex:repeat>
+                                                    </ul>
+                                                </div>
+                                                  <!-- *** Holds / Displays the selected account team role values from the dropdown option *** -->
+                                                  <apex:outputPanel id="selAcctTeamRole">
+                                                      <div class="col-xs-12">
+                                                          <div class="form-group">
+                                                              <br/>{!showSelectedAccountTeamRole}
+                                                          </div>
+                                                      </div>
+                                                  </apex:outputPanel>
+                                              </div>
+                                            </div>
+                                            </apex:outputPanel>
+                                                </div>
+                                                <div class="panel-footer" style="text-align: center; margin-top: 40px;">
+                                                    <apex:commandButton value="Apply Filters" styleclass="btn btn-default" action="{!searchUserUI}" rerender="popupUser,selAcct,selAcctTeamRole"/>
+                                                    <apex:commandButton value="Clear Filters" styleclass="btn btn-primary" action="{!clearFilter}" rerender="popupUser,userFilters"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <div class="details1">
+                                           <!-- <h4>User Details</h4>-->
+                                              <div class="btn-group btn-toggle" style="float: right;position:relative;top:23px ">
+                                                <apex:commandButton value="Show Selected" action="{!showSelected}" rerender="usrDetail" styleclass="btn btn-lg btn-default"/>
+                                                <apex:commandButton value="All" action="{!showAll}" rerender="usrDetail" styleclass="btn btn-lg btn-primary active"/>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <br/>
+                                        <apex:outputPanel id="popupUser">
+                                              <apex:pageBlock title="User Details" id="usrDetail">
+                                                   <apex:dataTable value="{!listUsrWrapper}" width="100%" var="a" border="1px" headerClass="headerFormat">
+                                                       <apex:column width="4%" styleClass="columnFormat">
+                                                           <apex:facet name="header">
+                                                               <c:Master_check_box_to_select_all_records ></c:Master_check_box_to_select_all_records>
+                                                           </apex:facet>
+                                                           <apex:inputCheckbox value="{!a.checked}"/>
+                                                       </apex:column>
+                                                       <apex:column width="30%" value="{!a.atm.User.Name}" headerValue="User Name" styleClass="columnFormat"/>
+                                                       <apex:column width="30%" value="{!a.atm.Account.Name}" headerValue="Account Name" styleClass="columnFormat"/>
+                                                       <apex:column width="30%" value="{!a.atm.TeamMemberRole}" headerValue="Account Team Role" styleClass="columnFormat"/>
+                                                   </apex:datatable>
+                                                    <BR/>
+                                                   <apex:panelGroup style="width:100%;text-align:center;display:block;margin:5px 0 0 0;">
+                                                       <apex:commandButton value="First Page" rerender="usrDetail" action="{!FirstPage}" disabled="{!prev}"/>
+                                                       <apex:commandButton value="Previous" rerender="usrDetail" action="{!previous}" disabled="{!prev}"/>
+                                                       <apex:commandButton value="Next" rerender="usrDetail" action="{!next}" disabled="{!nxt}"/>
+                                                       <apex:commandButton value="Last Page" rerender="usrDetail" action="{!LastPage}" disabled="{!nxt}"/>
+                                                       <apex:outputText value="Total Records: {!totalRecs }" style="float:left !important;"/>
+                                                       <apex:outputText value="Page {!PageNumber} of {!TotalPages}" style="float:right !important;"/>
+                                                   </apex:panelGroup>
+                                               </apex:pageBlock>
+                                            </apex:outputPanel>
+                                        <div class="modal-footer" style="border-top: none; padding: 15px; text-align: center;">
+                                            <apex:commandButton value="Add Selected" styleclass="btn btn-default" action="{!addSelected}" onComplete="populateCheckBoxes('myModal4', '.selected_Users', '.panel_4', 'Users', false);"  rerender="UserPanel,UserPanel_selected"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- User Popup Ends Here  -->
+                        <!-- View Summary popup Starts Here  -->
+                        <div class="modal fade" id="myModal5" role="dialog">
+                            <div class="modal-dialog" style="width: 980px">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title" style="font-size:16px">Initiative Execution Plan - Summary Data</h4>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                                <h4 style="font-size:14px">Client Accounts</h4>
+                                            </div>
+                                        </div>
+                                        <div class="details1">
+                                            <div class="panel-body">
+                                                <h4>Client Accounts selected for the IEP:</h4>
+                                                <br/><br/>
+                                                <div class="input-group">
+                                                    <apex:outputpanel id="clientpanel_selected2">
+                                                        <apex:outputText value="{!clientsSelectedName}" escape="false"/>
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br/>
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                                <h4 style="font-size:14px">Customer Accounts</h4>
+                                            </div>
+                                        </div>
+                                        <div class="details1">
+                                            <div class="panel-body">
+                                                <h4>Customer Accounts selected for the IEP:</h4>
+                                                <br/><br/>
+                                                <div class="input-group">
+                                                    <apex:outputpanel id="custPanel_selected2">
+                                                        <apex:outputText value="{!customersSelectedName}" escape="false"/>
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br/>
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                                <h4 style="font-size:14px">Initiatives</h4>
+                                            </div>
+                                        </div>
+                                        <div class="details1">
+                                            <div class="panel-body">
+                                                <h4>Initiative Relationships selected for the IEP:</h4>
+                                                <br/><br/>
+                                                <div class="input-group">
+                                                    <apex:outputpanel id="InitPanel_selected2">
+                                                        <apex:outputText value="{!initiativesSelectedName}" escape="false"/>
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br/>
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading" style="background-color:#555;color:#fff;">
+                                                <h4 style="font-size:14px">Users</h4>
+                                            </div>
+                                        </div>
+                                        <div class="details1">
+                                            <div class="panel-body">
+                                                <h4>Users selected for the IEP:</h4>
+                                                <br/><br/>
+                                                <div class="input-group">
+                                                    <apex:outputpanel id="UserPanel_selected2">
+                                                        <apex:outputText value="{!usersSelectedName}" escape="false"/>
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- View Summary Popup Ends Here  -->
+
+                        <apex:actionFunction name="clntSearch" action="{!searchClientsUI}" rerender="popupClient">
+                            <apex:param name="ClientParam" value="" assignTo="{!searchCriteriaClient}" />
+                        </apex:actionFunction>
+                        <apex:actionFunction name="customerSearch" action="{!searchCustomerUI}" rerender="popupCustomer">
+                            <apex:param name="CustParam" value="" assignTo="{!searchCriteriaCust}" />
+                        </apex:actionFunction>
+                    </apex:form>
+                </div>
+            </div>
+
+            </apex:outputPanel>
+            <script>
+                var populateCheckBoxes = function(modalID, inputElem, currentPanelID, typeOfAccount, panelID, clearInputFlag){
+                    var selectedLength = ($(inputElem).val() == '' ? 0 : $(inputElem).val().split(' | ').length);
+
+                    if(currentPanelID == ".panel_3") {
+                        $(currentPanelID).find(".items_text").html(selectedLength +" Initiative Relationships selected");
+                    } else {
+                        $(currentPanelID).find(".items_text").html(selectedLength +" "+typeOfAccount+" selected");
+                    }
+
+                    $("#"+modalID+" button[data-dismiss='modal']").trigger("click");
+
+                    var currPanel = $(panelID);
+                    while(currPanel.length > 0){
+                        var currPanelID = "";
+
+                        currPanel.addClass("inactive");
+                        currPanelID = $(currPanel).find(".panel-collapse").attr("id");
+                        if(clearInputFlag){
+                            $(currPanel).find("input[type='text']").val("");
+                            $(currPanel).find(".items_text").empty();
+                        }
+
+                        $(currPanel).find(".panel-collapse").attr("id", currPanelID+" disabled");
+                        $(currPanel).find(".panel-heading").removeClass("collapsed");
+                        $(currPanel).find(".panel-collapse").removeClass("collapsed");
+                        $(currPanel).find(".panel-collapse").removeClass("in");
+                        $(currPanel).find(".panel-collapse").addClass("collapse");
+
+                        currPanel = currPanel.next();
+                    }
+
+                    if(panelID){
+                        var currPanelIDDisabled = $(panelID).find(".panel-collapse").attr("id").split(" ");
+                        if(currPanelIDDisabled.length > 0){
+                            $(panelID).find(".panel-collapse").attr("id", currPanelIDDisabled[0]);
+                            $(panelID).find(".panel-heading").trigger("click");
+                            $(panelID).removeClass("inactive");
+                        }
+                    }
+                };
+
+                function disableClientCust(){
+                     disablePanel(".panel_1");
+                     disablePanel(".panel_2");
+                     enablePanel(".panel_3");
+                     enablePanel(".panel_4");
+                }
+
+                function disablePanel(panelName){
+                     var currPanel = $(panelName);
+                     currPanelID = $(currPanel).find(".panel-collapse").attr("id");
+                     currPanel.addClass("inactive");
+                     $(currPanel).find(".panel-heading").removeClass("collapsed");
+                     $(currPanel).find(".panel-collapse").removeClass("collapsed");
+                     $(currPanel).find(".panel-collapse").removeClass("in");
+                     $(currPanel).find(".panel-collapse").addClass("collapse");
+                     $(currPanel).find(".panel-collapse").attr("id", currPanelID+" disabled");
+                }
+
+                function enablePanel(panelNameEnable){
+                     var currPanel = $(panelNameEnable);
+                     var existingPanelIDFull = $(currPanel).find(".panel-collapse").attr("id");
+                     var existingPanelID = existingPanelIDFull.split(" ")[0];
+                     $(currPanel).find(".panel-collapse").attr("id", existingPanelID);
+                     currPanel.removeClass("inactive");
+                }
+
+                function enableAll(){
+                    var currPanel = $(".panel_1");
+                    while(currPanel.length > 0){
+                        var existingPanelIDFull = $(currPanel).find(".panel-collapse").attr("id");
+                        var existingPanelID = existingPanelIDFull.split(" ")[0];
+                        $(currPanel).find(".panel-collapse").attr("id", existingPanelID);
+                        currPanel.removeClass("inactive");
+
+                        currPanel = currPanel.next();
+                    }
+                }
+
+                function validateInputs(btn){
+                    var errorMsg='';
+                    if($(".visitName").val() ==''){
+                        errorMsg ='Plan Name';
+                    }
+                    if($(".startDate").val() == ''){
+                        errorMsg = (errorMsg =='' ? 'Start Date' : errorMsg + ', Start Date');
+                    }
+                    if($(".endDate").val() == ''){
+                        errorMsg = (errorMsg =='' ? 'End Date' : errorMsg + ', End Date');
+                    }
+                    if($(".selected_Clients").val() == ''){
+                        errorMsg = (errorMsg =='' ? 'Clients' : errorMsg + ', Clients');
+                    }
+                    if($(".selected_Customers").val() == ''){
+                        errorMsg = (errorMsg =='' ? 'Customers' : errorMsg + ', Customers');
+                    }
+                    if($(".selected_Initiatives").val() == '' && btn != 'Save'){
+                        errorMsg = (errorMsg =='' ? 'Initiatives' : errorMsg + ', Initiatives');
+                    }
+                    if($(".selected_Users").val() == '' && btn != 'Save'){
+                        errorMsg = (errorMsg =='' ? 'Users' : errorMsg + ', Users');
+                    }
+                    if(errorMsg != ''){
+                        errorMsg+= ' '+'{!$Label.Initiative_Plan_Validation}';
+                        alert(errorMsg);
+                        return false;
+                    }
+                }
+
+                function clientSearch(){
+                    clntSearch($('.clientSearch').val());
+                }
+
+                function removeClientSearch(){
+                    $('.clientSearch').val('');
+                }
+                function custSearch(){
+                    customerSearch($('.custSearch').val());
+                }
+
+                function removeCustSearch(){
+                    $('.custSearch').val('');
+                }
+            </script>
+
+      </apex:pageBlock>
+            </div>
+        </body>
+    </html>
+</apex:page>
