@@ -1,9 +1,0 @@
-<apex:page standardStylesheets="true" sidebar="true" showHeader="true" controller="ErrorController" action="{!Checkpermissions}">
-
-    <apex:form >
-        <div style="margin-top:75px; margin-left:150px; margin-bottom:50px; font-weight:bold; font-size:1.5em;">
-            <apex:outputLabel value="{!ErrorText}" for="errorLabel"/>
-        </div>
-    </apex:form>
- 
-</apex:page>
